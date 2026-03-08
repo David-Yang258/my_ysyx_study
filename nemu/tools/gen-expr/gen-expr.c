@@ -23,16 +23,85 @@
 // this should be enough
 static char buf[65536] = {};
 static char code_buf[65536 + 128] = {}; // a little larger than `buf`
-static char *code_format =
+static char *code_format = 
 "#include <stdio.h>\n"
-"int main() { "
-"  unsigned result = %s; "
-"  printf(\"%%u\", result); "
-"  return 0; "
+"#include <signal.h>\n"
+"#include <setjmp.h>\n"
+"jmp_buf recovery;\n"
+"volatile int exception_occured = 0;\n"
+"void handle_overflow_or_divby_0(int sig){\n"
+"  signal(SIGFPE,handle_overflow_or_divby_0);\n"
+"  exception_occured = 1;\n"
+"  longjmp(recovery,1);\n"
+"  }\n"
+"int main() { \n"
+"  int recovery_status;\n"
+"  signal(SIGFPE,handle_overflow_or_divby_0);\n"
+"  recovery_status = setjmp(recovery);"
+"  if(recovery_status == 0){\n"
+"  unsigned result = %s; \n"
+"  if(exception_occured == 0) printf(\"%%u\", result); \n"
+"  }\n"
+"  else return -1;\n"
+"  return 0; \n"
 "}";
 
+#define MAX_LENGTH 100
+
+int choose(uint32_t n){
+	uint32_t num;
+	num = rand() % n;
+	return num;
+}
+
+void gen_num(int n){
+	uint32_t num;
+	num = rand() % 100 + n;
+	char str[10];
+	sprintf(str,"%u",num);
+	if((MAX_LENGTH - strlen(buf)) > strlen(str)) strcat(buf,str);
+	//else assert(0);
+}
+
+void gen(char c){
+	char str[5];
+	sprintf(str, "%c",c);
+	if((MAX_LENGTH - strlen(buf)) > strlen(str)) strcat(buf,str);
+	//else assert(0);
+}
+
+void gen_rand_op(){
+	char op[4] = {'+','-','*','/'};
+	uint32_t index = choose(4);
+	char str[5];
+	sprintf(str, "%c", op[index]);
+	if((MAX_LENGTH - strlen(buf)) > strlen(str)) strcat(buf,str);
+	//else assert(0);
+}
+
 static void gen_rand_expr() {
-  buf[0] = '\0';
+	//buf[0] = '\0';
+	switch(choose(3)){
+		case 0: {
+			gen_num(0);
+			break;
+		}
+		case 1: {
+			gen('(');
+			gen_rand_expr();
+			gen(')');
+			break;
+		}
+		default: {
+		gen_rand_expr();
+		gen_rand_op();
+		int index = strlen(buf);
+		printf("%c",buf[index]);
+		if(buf[index] == '/') gen_num(1);
+		else gen_rand_expr();
+		break;
+		}
+	}
 }
 
 int main(int argc, char *argv[]) {
@@ -44,6 +113,7 @@ int main(int argc, char *argv[]) {
   }
   int i;
   for (i = 0; i < loop; i ++) {
+	buf[0] = '\0';
     gen_rand_expr();
 
     sprintf(code_buf, code_format, buf);
@@ -60,10 +130,13 @@ int main(int argc, char *argv[]) {
     assert(fp != NULL);
 
     int result;
-    ret = fscanf(fp, "%d", &result);
+	ret = fscanf(fp, "%d", &result);
     pclose(fp);
-
-    printf("%u %s\n", result, buf);
+	
+	if(ret != EOF){
+		printf("%d ", result);
+		printf("%s\n", buf);
+	}
   }
   return 0;
 }

@@ -24,8 +24,24 @@ const char *regs[] = {
 };
 
 void isa_reg_display() {
+	int i;
+	for(i = 0;i<sizeof(regs)/sizeof(regs[0]);i++) {
+		printf("%s : %u\n",regs[check_reg_idx(i)], cpu.gpr[check_reg_idx(i)]);
+	}
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {
-  return 0;
+  if(success == NULL) panic("INVALID ptr to call!\n");
+  int cnt = 0;
+  *success = 0;
+  while(cnt < sizeof(regs)/sizeof(regs[0])){
+	//printf("%s, %s", s, regs[check_reg_idx(cnt)]);
+	if(!strcmp(s, regs[check_reg_idx(cnt)])) {
+		*success = 1;
+		break;
+	}
+	cnt++;
+  }
+  if(*success == 1) return cpu.gpr[check_reg_idx(cnt)];
+  else return 0;
 }

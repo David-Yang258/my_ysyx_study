@@ -18,11 +18,13 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "sdb.h"
+#include "memory/vaddr.h"
 
 static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
+void free_wp(WP*);
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -47,9 +49,63 @@ static int cmd_c(char *args) {
   return 0;
 }
 
+static int cmd_si(char *args){
+  cpu_exec(1);
+  return 0;
+}
+
+static int cmd_info(char *args){
+  if( strcmp(args, "r") == 0)isa_reg_display();
+  else if( strcmp(args, "w") == 0) printf("UNDER CONSTRUCTION\n");
+  else printf("Unknown arg, use help for more detail\n");
+  return 0;
+}
+
+static int cmd_x(char *args){
+  int N = atoi(strtok(args," "));
+  int addr = strtol(strtok(NULL, " "),NULL,16);
+  if(N<=0 && N >64*1024) {
+		printf("N must be bigger than 0, smaller than 64KB");
+    	return 0;
+	}
+  else if(addr > 0xFFFFFFFF - N){
+		printf("addr must be smaller than 0xFFFFFFFF - %d", N);
+		return 0;
+	}
+ 	 for(int i = 0;i < N;i++){
+		printf("%x : %x\n",addr+4*i, vaddr_read(addr+4*i,4));	
+	}
+  return 0;
+}
 
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_END;
   return -1;
+}
+
+static int cmd_p(char *args){
+  if(strlen(args) >= 500) printf("Expression is too long!");
+  else {
+	bool success = 1;
+	int result = expr(args, &success);
+	if(success == 1) printf("Result is %d\n", result);
+	else printf("Fatal error!\n");
+  }
+  return 0;
+}
+
+static int cmd_w(char *args){
+	bool success = 1;
+	word_t Eval = expr(args,&success);
+	if(success) new_wp(args, Eval);
+	else printf("Invalid expression!\n");
+	return 0;
+}
+
+static int cmd_d(char *args){
+	WP *wait2free = find_wp_idx_atwork(atoi(args));
+	free_wp(wait2free);
+	return 0;
 }
 
 static int cmd_help(char *args);
@@ -61,7 +117,13 @@ static struct {
 } cmd_table [] = {
   { "help", "Display information about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
+  { "si", "Continue the execution of the program by 1 step", cmd_si},
+  { "info", "Print the value of each register or watchpoint", cmd_info},
+  { "x", "Print the value stored in mem of N consistent addr", cmd_x},
   { "q", "Exit NEMU", cmd_q },
+  { "p", "Evaluate supported expression", cmd_p},
+  { "w", "Set a watch point for arbitrary expression", cmd_w},
+  { "d", "delete the watch point with index N", cmd_d},
 
   /* TODO: Add more commands */
 
