@@ -101,12 +101,12 @@ word_t ReEvalWPs(){
 		word_t new_value = expr(wp2check->exp, &success);
 		if(!success) panic("ReEval fatal error!");
 		if(new_value != wp2check->old_value){
-			printf("Watchpoint trapped, value %u changed for %s; Prev: %u",new_value, wp2check->exp, wp2check->old_value);
+			printf("Watchpoint trapped, value %u changed for %s; Prev: %u\n",new_value, wp2check->exp, wp2check->old_value);
 			wp2check->old_value = new_value;
 			Expr_refresh = 1;			
 		}
 		wp2check = wp2check->next;
 	}
-	printf("%u\n", Expr_refresh);
+	if(Expr_refresh) return 1;
 	return 0;
 }
