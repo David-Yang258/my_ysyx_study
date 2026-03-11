@@ -25,6 +25,7 @@ static int is_batch_mode = false;
 void init_regex();
 void init_wp_pool();
 void free_wp(WP*);
+void wp_display();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -50,20 +51,25 @@ static int cmd_c(char *args) {
 }
 
 static int cmd_si(char *args){
-  cpu_exec(1);
+  cpu_exec(atoi(args));
   return 0;
 }
 
 static int cmd_info(char *args){
   if( strcmp(args, "r") == 0)isa_reg_display();
-  else if( strcmp(args, "w") == 0) printf("UNDER CONSTRUCTION\n");
+  else if( strcmp(args, "w") == 0) wp_display(); 
   else printf("Unknown arg, use help for more detail\n");
   return 0;
 }
 
 static int cmd_x(char *args){
-  int N = atoi(strtok(args," "));
-  int addr = strtol(strtok(NULL, " "),NULL,16);
+  char Nstr[50], Expr_str[50];
+  int result = sscanf(args, "%s %[^\n]",Nstr, Expr_str);
+  if(!result) printf("Fatal Error\n");
+  int N = atoi(Nstr);
+  bool success = 1;
+  int addr = expr(Expr_str,&success);
+  if(!success) printf("Fatal Error\n");
   if(N<=0 && N >64*1024) {
 		printf("N must be bigger than 0, smaller than 64KB");
     	return 0;

@@ -110,3 +110,12 @@ word_t ReEvalWPs(){
 	if(Expr_refresh) return 1;
 	return 0;
 }
+
+void wp_display(){
+	WP *tmp = head;
+	printf("Watchpoint list:\n");
+	while(tmp != NULL){
+		printf("Watchpoint %d: Exp: %s Value: %u\n", tmp->NO, tmp->exp, tmp->old_value);
+		tmp = tmp->next;
+	}
+}

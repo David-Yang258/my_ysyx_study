@@ -43,7 +43,7 @@ static struct rule {
   {"&&", TK_LOGICAND},				// logic and
 
   {"\\$(0|ra|sp|gp|tp|t[0-6]|s[0-9]|s10|s11|a[0-7])", TK_REG},
-  {"0[Xx][0-9]+", TK_HEXNUM},		//hexnumber
+  {"0[Xx][0-9a-f]+", TK_HEXNUM},		//hexnumber
   {"[0-9]+", TK_DECNUM},            //decnumber
 
 
