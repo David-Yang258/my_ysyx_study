@@ -4,7 +4,21 @@ void __am_timer_init() {
 }
 
 void __am_timer_uptime(AM_TIMER_UPTIME_T *uptime) {
-  uptime->us = 0;
+	uint32_t L32bits;
+	asm volatile(
+			"lw %0, 0(%1)"
+			: "=r"(L32bits)
+			: "r" ((uintptr_t)0xa0000048)
+			: "memory"
+			);
+	uint32_t H32bits;
+	asm volatile(
+			"lw %0, 0(%1)"
+			: "=r"(H32bits)
+			: "r" ((uintptr_t)0xa000004c)
+			: "memory"
+			);
+  uptime->us = ((uint64_t)H32bits << 32) | L32bits;
 }
 
 void __am_timer_rtc(AM_TIMER_RTC_T *rtc) {

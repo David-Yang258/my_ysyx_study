@@ -39,14 +39,15 @@ static char *code_format =
 "  signal(SIGFPE,handle_overflow_or_divby_0);\n"
 "  recovery_status = setjmp(recovery);"
 "  if(recovery_status == 0){\n"
-"  unsigned result = %s; \n"
+"  volatile unsigned result = %s; \n"
 "  if(exception_occured == 0) printf(\"%%u\", result); \n"
 "  }\n"
 "  else return -1;\n"
 "  return 0; \n"
 "}";
 
-#define MAX_LENGTH 100
+#define MAX_LENGTH 800
+#define MAX_LOOP   100
 
 int choose(uint32_t n){
 	uint32_t num;
@@ -56,7 +57,8 @@ int choose(uint32_t n){
 
 void gen_num(int n){
 	uint32_t num;
-	num = rand() % 100 + n;
+	num = rand() % 100;
+	if(n == 1) num = num * 2 + 1;
 	char str[10];
 	sprintf(str,"%u",num);
 	if((MAX_LENGTH - strlen(buf)) > strlen(str)) strcat(buf,str);
@@ -79,8 +81,11 @@ void gen_rand_op(){
 	//else assert(0);
 }
 
-static void gen_rand_expr() {
+static void gen_rand_expr(int n) {
 	//buf[0] = '\0';
+	static int loop_cnt = 0;
+	if(n) loop_cnt = 0;
+	loop_cnt++;
 	switch(choose(3)){
 		case 0: {
 			gen_num(0);
@@ -88,17 +93,20 @@ static void gen_rand_expr() {
 		}
 		case 1: {
 			gen('(');
-			gen_rand_expr();
+			if(loop_cnt <= MAX_LOOP)gen_rand_expr(0);
+			else gen_num(0);
 			gen(')');
 			break;
 		}
 		default: {
-		gen_rand_expr();
+		if(loop_cnt <= MAX_LOOP)gen_rand_expr(0);
+		else gen_num(0);
 		gen_rand_op();
 		int index = strlen(buf);
 		printf("%c",buf[index]);
-		if(buf[index] == '/') gen_num(1);
-		else gen_rand_expr();
+		if(buf[index-1] == '/') gen_num(1);
+		else if (loop_cnt <= MAX_LOOP) gen_rand_expr(0);
+		else gen_num(0);
 		break;
 		}
 	}
@@ -114,7 +122,7 @@ int main(int argc, char *argv[]) {
   int i;
   for (i = 0; i < loop; i ++) {
 	buf[0] = '\0';
-    gen_rand_expr();
+    gen_rand_expr(1);
 
     sprintf(code_buf, code_format, buf);
 

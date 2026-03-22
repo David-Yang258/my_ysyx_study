@@ -15,5 +15,6 @@
 
 NAME = gen-expr
 SRCS = gen-expr.c
-include $(NEMU_HOME)/scripts/build.mk
-CFLAGS += -g
+include $(NEMU_HOME)/scripts/build.mk 
+CFLAGS := $(filter-out -O2 -O3 -Os -Ofast, $(CFLAGS)) -O0 -g -fno-builtin
+LDFLAGS := $(filter-out -O2 -O3 -Os -Ofast, $(LDFLAGS)) -O0

@@ -42,7 +42,7 @@ static struct rule {
   {"!=", TK_NE},					// not equal
   {"&&", TK_LOGICAND},				// logic and
 
-  {"\\$(0|ra|sp|gp|tp|t[0-6]|s[0-9]|s10|s11|a[0-7])", TK_REG},
+  {"\\$(0|ra|sp|gp|tp|t[0-6]|s[0-9]|s10|s11|a[0-7]|pc)", TK_REG},
   {"0[Xx][0-9a-f]+", TK_HEXNUM},		//hexnumber
   {"[0-9]+", TK_DECNUM},            //decnumber
 
@@ -183,12 +183,12 @@ word_t expr(char *e, bool *success) {
 
   /* TODO: Insert codes to evaluate the expression. */
   int result = eval(0, nr_token-1, success);
-  if(!(*success)) panic("func eval is wrong!");
+  //if(!(*success)) panic("func eval is wrong!");
   return result;
 }
 
 word_t eval(int p, int q, bool* success){
-  Log("Now in eval, p = %d, q = %d", p, q);
+  //Log("Now in eval, p = %d, q = %d", p, q);
   if(tokens[p].type == TK_NOTYPE) p++;
   if(tokens[q].type == TK_NOTYPE) q--;
 
@@ -278,35 +278,35 @@ int sep_op(int this_op, bool SEP_OP_FLAG){
 void find_sep_op(int p, int q, int *op_check, int *op_sep){
 	if(tokens[*op_check].type == '+'){
 		if(sep_op('+',OP_CHECK) == true) *op_sep = *op_check;
-		Log("+ found at %d", *op_check);
+		//Log("+ found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == '-'){
 		if(sep_op('-',OP_CHECK) == true) *op_sep = *op_check;
-		Log("- found at %d", *op_check);
+		//Log("- found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == '*'){
 		if(sep_op('*',OP_CHECK) == true) *op_sep = *op_check;
-		Log("* found at %d", *op_check);
+		//Log("* found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == '/'){
 		if(sep_op('/',OP_CHECK) == true) *op_sep = *op_check;
-		Log("/ found at %d", *op_check);
+		//Log("/ found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == TK_DEREF){
 		if(sep_op(TK_DEREF,OP_CHECK) == true) *op_sep = *op_check;
-		Log("Deref * found at %d", *op_check);
+		//Log("Deref * found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == TK_EQ){
 		if(sep_op(TK_EQ,OP_CHECK) == true) *op_sep = *op_check;
-		Log("== found at %d", *op_check);
+		//Log("== found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == TK_NE){
 		if(sep_op(TK_NE,OP_CHECK) == true) *op_sep = *op_check;
-		Log("!= found at %d", *op_check);
+		//Log("!= found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == TK_LOGICAND){
 		if(sep_op(TK_LOGICAND,OP_CHECK) == true) *op_sep = *op_check;
-		Log("&& found at %d", *op_check);
+		//Log("&& found at %d", *op_check);
 	}
 	else if(tokens[*op_check].type == '('){
 		int pr_layers = 0;
@@ -330,52 +330,52 @@ word_t calculate(int p, int q, int *op_sep, bool *success){
 		if(tokens[*op_sep].type == '+') {
 			word_t add1 = eval(p, *op_sep-1,success);
 			word_t add2 = eval(*op_sep+1,q,success);
-			Log("returning %d + %d", add1, add2);
+			//Log("returning %d + %d", add1, add2);
 			return add1 + add2;
 		}
 		else if(tokens[*op_sep].type == '-') {
 			word_t sub1 = eval(p, *op_sep-1,success);
 			word_t sub2 = eval(*op_sep+1,q,success);
-			Log("returning %d - %d", sub1, sub2);
+			//Log("returning %d - %d", sub1, sub2);
 			return sub1 - sub2;
 		}
 	//'+' or '-' found!
 		else if(tokens[*op_sep].type == '*') {
 			word_t mul1 = eval(p,*op_sep-1,success);
 			word_t mul2 = eval(*op_sep+1,q,success);
-			Log("returning %d * %d", mul1, mul2);
+			//Log("returning %d * %d", mul1, mul2);
 			return mul1 * mul2;
 		}
 		else if(tokens[*op_sep].type == '/'){
 			word_t div1 = eval(p,*op_sep-1,success);
 			word_t div2 = eval(*op_sep+1,q,success);
-			Log("returning %d / %d", div1, div2);
-			return div1 / div2;
+			//Log("returning %d / %d", div1, div2);
+			return (signed)div1 / (signed)div2;
 		}
 	//'*' or '/' found!
 		else if(tokens[*op_sep].type == TK_EQ){
 			word_t LHE = eval(p,*op_sep-1,success);
 			word_t RHE = eval(*op_sep+1,q,success);
-			Log("returning %d == %d", LHE, RHE);
+			//Log("returning %d == %d", LHE, RHE);
 			return LHE == RHE;
 		}
 		else if(tokens[*op_sep].type == TK_NE){
 			word_t LHE = eval(p,*op_sep-1,success);
 			word_t RHE = eval(*op_sep+1,q,success);
-			Log("returning %d != %d", LHE, RHE);
+			//Log("returning %d != %d", LHE, RHE);
 			return LHE != RHE;
 		}
 	//"==" or "!=" found!
 		else if(tokens[*op_sep].type == TK_LOGICAND){
 			word_t LHE = eval(p,*op_sep-1,success);
 			word_t RHE = eval(*op_sep+1,q,success);
-			Log("returning %d && %d", LHE, RHE);
+			//Log("returning %d && %d", LHE, RHE);
 			return LHE && RHE;
 		}
 	//"&&" found!
 		else if(tokens[*op_sep].type == TK_DEREF){
 			word_t RHE = eval(q,*op_sep+1,success);
-			Log("returning *RHE=%d", RHE);
+			//Log("returning *RHE=%d", RHE);
 			return vaddr_read(RHE, 4);
 		}
 	//"*" deref found
