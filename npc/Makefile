@@ -1,38 +1,42 @@
 TOPNAME = top
 WORK_DIR = ex7
-NXDC_FILES = constr/$(WORK_DIR)/top.nxdc
-INC_PATH ?=
+NXDC_FILES = constr/top.nxdc
+INC_PATH ?= include/
 
+FILELIST_MK = $(shell find -L ./csrc -name "filelist.mk")
 VERILATOR = verilator
-VERILATOR_CFLAGS += -MMD --build -cc  \
-                                -O3 --x-assign fast --x-initial fast --noassert
+VERILATOR_CFLAGS += -MMD --build -cc  -Wall -trace -O2 
 
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir
 BIN = $(BUILD_DIR)/$(TOPNAME)
 
+
 default: $(BIN)
 
 $(shell mkdir -p $(BUILD_DIR))
 
+LIBCAPSTONE = $(abspath tools/capstone/repo/libcapstone.so.5)
+CAPSTONE_CFLAGS += -I $(abspath tools/capstone/repo/include)
 # constraint file
-SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
-$(SRC_AUTO_BIND): $(NXDC_FILES)
-	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
+#SRC_AUTO_BIND = $(abspath $(BUILD_DIR)/auto_bind.cpp)
+#$(SRC_AUTO_BIND): $(NXDC_FILES)
+#	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # project source
-VSRCS = $(shell find $(abspath ./vsrc/$(WORK_DIR)) -name "*.v")
-CSRCS = $(shell find $(abspath ./csrc/$(WORK_DIR)) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
-CSRCS += $(SRC_AUTO_BIND)
+VSRCS = $(shell find $(abspath ./vsrc/) -name "*.v")
+CSRCS = $(shell find $(abspath ./csrc/) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
+#CSRCS += $(SRC_AUTO_BIND)
 
 # rules for NVBoard
-include $(NVBOARD_HOME)/scripts/nvboard.mk
+#include $(NVBOARD_HOME)/scripts/nvboard.mk
 
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
-CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\""
+CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\"" $(CAPSTONE_CFLAGS) 
+LDFLAGS  += -lreadline $(LIBCAPSTONE) 
 
-$(BIN): $(VSRCS) $(CSRCS) $(NVBOARD_ARCHIVE)
+$(BIN): $(VSRCS) $(CSRCS) #$(NVBOARD_ARCHIVE)
 	@rm -rf $(OBJ_DIR)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $^ \

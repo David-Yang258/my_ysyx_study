@@ -18,7 +18,17 @@
 #include "../local-include/reg.h"
 
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc) {
-  return false;
+  int cpu_reg_num = ARRLEN(cpu.gpr);
+  if(cpu.pc != ref_r->pc) return false;
+	for(int i = 0;i < cpu_reg_num;i++){
+		if(ref_r->gpr[i] != cpu.gpr[i]) {
+			Log("%s Reg content is different after executing instruction at pc =" FMT_WORD 
+					", right = " FMT_WORD ", wrong = " FMT_WORD ", diff = "
+					FMT_WORD, ANSI_FMT("DIFFTEST ERROR!", ANSI_FG_RED),pc, ref_r->gpr[i], cpu.gpr[i], ref_r->gpr[i] ^ cpu.gpr[i]);
+			return false;
+		}
+	}
+  return true;
 }
 
 void isa_difftest_attach() {

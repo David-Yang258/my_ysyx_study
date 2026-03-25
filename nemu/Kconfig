@@ -152,14 +152,34 @@ config ITRACE_COND
   default "true"
 
 config DTRACE
-  depends on nothing
-  bool "nothing"
+  depends on TRACE 
+  bool "enable device tracer"
   default y
 
 config DTRACE_COND
   depends on DTRACE
-  string "nothing"
+  string "Only trace devices when condition is true"
   default "true"
+
+config MTRACE
+  depends on TRACE 
+  bool "enable memory tracer"
+  default n
+
+config MTRACE_COND
+  depends on MTRACE
+  string "Only trace memory when condition is true"
+  default "false"
+
+config FTRACE
+  depends on TRACE
+  bool "enable function tracer"
+  default n
+
+config FTRACE_COND
+  depends on FTRACE
+  string "Onlt trace function when condition is true"
+  default "false"
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF

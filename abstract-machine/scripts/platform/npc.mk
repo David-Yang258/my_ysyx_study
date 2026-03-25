@@ -31,6 +31,6 @@ run: insert-arg
 	@echo "TODO: add command here to run simulation"
 	#$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim IMG=$(IMAGE).bin
 	@echo $(IMAGE)
-	@$(NPC_HOME)/obj_dir/Vtop --img $(IMAGE).hex
+	@$(NPC_HOME)/build/top --img $(IMAGE).hex -e $(IMAGE).elf 
 
 .PHONY: insert-arg
