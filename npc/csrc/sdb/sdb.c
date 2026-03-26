@@ -6,6 +6,7 @@
 
 
 static int is_batch_mode = 0;
+extern char *difftest_so_file
 
 
 void init_regex();
@@ -14,6 +15,7 @@ void isa_reg_display();
 extern "C" int pmem_read(int);
 void init_wp_pool();
 void init_disasm();
+long init_difftest(const char*);
 void free_wp(WP*);
 void wp_display();
 
@@ -188,4 +190,5 @@ void init_sdb(){
 	init_regex();
     init_wp_pool();
 	init_disasm();
+	init_difftest(difftest_so_file);
 }
