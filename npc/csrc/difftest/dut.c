@@ -2,6 +2,7 @@
 #include "../../include/rv32im.h"
 #include "Vtop.h"
 #include "../../build/obj_dir/Vtop___024root.h"
+#include "../../include/debug.h"
 
 extern Vtop* top;
 

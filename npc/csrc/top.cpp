@@ -20,6 +20,7 @@ static bool ebreak_stop = 0;
 static char *mem_file = NULL;
 static size_t mem_words = 0;
 static char *elf_file = NULL;
+char *img_file = NULL;
 char *diff_so_file = NULL;
 
 Vtop *top = NULL;
@@ -53,6 +54,7 @@ int main(int argc, char* argv[]){
 	for(int i = 1;i < argc; i++){
 		if(strcmp(argv[i], "--img") == 0 && i+1 < argc){
 			mem_file = argv[++i];	
+			strcpy(img_file, mem_file);
 			printf("%s\n",mem_file);
 		}
 		if(strcmp(argv[i], "-b") == 0){

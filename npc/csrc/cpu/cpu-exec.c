@@ -3,8 +3,11 @@
 #include "../../include/utils.h"
 #include "../../include/debug.h"
 #include "../../include/trace.h"
+#include "../../include/isa/isa-def.h"
+#include "../../build/obj_dir/Vtop___024root.h"
 
 #define MAX_INST_TO_PRINT 20
+#define NR_GPR 16
 
 
 extern Vtop* top;
@@ -15,6 +18,8 @@ word_t ReEvalWPs();
 bool trace_inst2ringbuf(word_t, uint32_t);
 void iringbuf_display();
 void trace_func_ret(paddr_t);
+
+CPU_state cpu = {};
 
 static void exec_once(){
 	if(top->clk != 0) top->clk = 0;
@@ -29,6 +34,10 @@ static void exec_once(){
 	top->clk = !top->clk;
 	top->eval();
 	top->clk = !top->clk;
+	cpu.pc = top->pc;
+	for(int i = 0;i < NR_GPR;i++){
+		cpu.gpr[i] = top->rootp->top__DOT__inst_gpr__DOT__rf[i];
+	}
 	if(ReEvalWPs()) npc_state.state = NPC_STOP;
 }
 

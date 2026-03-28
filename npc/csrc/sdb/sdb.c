@@ -3,10 +3,14 @@
 #include "../../include/utils.h"
 #include "sdb.h"
 #include "../../include/memory.h"
+#include <assert.h>
 
 
 static int is_batch_mode = 0;
-extern char *difftest_so_file
+extern char *img_file;
+extern char *diff_so_file;
+long bin_img_size = 0;
+static int difftest_port = 1234;
 
 
 void init_regex();
@@ -15,9 +19,10 @@ void isa_reg_display();
 extern "C" int pmem_read(int);
 void init_wp_pool();
 void init_disasm();
-long init_difftest(const char*);
+void init_difftest(char*, long, int);
 void free_wp(WP*);
 void wp_display();
+static long load_img();
 
 
 //read sdb input
@@ -190,5 +195,39 @@ void init_sdb(){
 	init_regex();
     init_wp_pool();
 	init_disasm();
-	init_difftest(difftest_so_file);
+	bin_img_size = load_img();
+	init_difftest(diff_so_file, bin_img_size, difftest_port);
+}
+
+
+static long load_img(){
+	if(img_file == NULL){
+		printf("No image is given.");
+		return 4096;
+	}	
+	char bin_img[256];
+	char *dot = strrchr(img_file, '.');	
+	if(dot && strcmp(dot, ".hex") == 0){
+		size_t len = dot - img_file;
+		strncpy(bin_img, img_file, len);
+		bin_img[len] = '\0';
+		strcat(bin_img, ".bin");
+	}
+	else if(dot && strcmp(dot, ".bin") == 0){
+		strcpy(bin_img, img_file);
+	}
+	else {
+		printf("Wrong input format!");
+		return 4096;
+	}
+
+	FILE *fp = fopen(bin_img, "rb");
+	assert(fp);
+
+	fseek(fp, 0, SEEK_END);
+	long size = ftell(fp);
+	printf("Image.bin is %s, size = %ld", bin_img, size);
+	fclose(fp);
+	return size;
+
 }

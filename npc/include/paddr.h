@@ -13,3 +13,5 @@
 
 uint8_t* guest_to_host(paddr_t paddr);
 
+#endif
+
