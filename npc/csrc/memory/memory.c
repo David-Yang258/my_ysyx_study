@@ -122,4 +122,7 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int clk){
 	//printf("addr %x written: %x\n", word_addr, memory[word_addr]);
 }
 
+void pmem_release(){
+	if(memory != NULL) free(memory);
+}
 

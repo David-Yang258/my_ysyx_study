@@ -17,6 +17,8 @@ MAINARGS_MAX_LEN = 64
 MAINARGS_PLACEHOLDER = the_insert-arg_rule_in_Makefile_will_insert_mainargs_here
 CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER=$(MAINARGS_PLACEHOLDER)
 
+DIFF_SO_FILE = /home/daviyang3182/ysyx/ysyx-workbench/npc/tools/nemu-diff/riscv32-nemu-interpreter-so
+
 insert-arg: image
 	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
 	@hexdump -v -e '8/4 "%08x " "\n"' $(IMAGE).bin | \
@@ -30,7 +32,5 @@ image: image-dep
 run: insert-arg
 	@echo "TODO: add command here to run simulation"
 	#$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim IMG=$(IMAGE).bin
-	@echo $(IMAGE)
-	@$(NPC_HOME)/build/top --img $(IMAGE).hex -e $(IMAGE).elf 
-
+	@$(NPC_HOME)/build/top --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) -b
 .PHONY: insert-arg

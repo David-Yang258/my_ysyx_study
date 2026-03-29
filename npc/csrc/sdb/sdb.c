@@ -19,6 +19,8 @@ void isa_reg_display();
 extern "C" int pmem_read(int);
 void init_wp_pool();
 void init_disasm();
+void init_mem();
+void init_diff_cpu();
 void init_difftest(char*, long, int);
 void free_wp(WP*);
 void wp_display();
@@ -196,6 +198,8 @@ void init_sdb(){
     init_wp_pool();
 	init_disasm();
 	bin_img_size = load_img();
+	init_mem();
+	init_diff_cpu();
 	init_difftest(diff_so_file, bin_img_size, difftest_port);
 }
 
@@ -205,6 +209,7 @@ static long load_img(){
 		printf("No image is given.");
 		return 4096;
 	}	
+	printf("loading img\n");
 	char bin_img[256];
 	char *dot = strrchr(img_file, '.');	
 	if(dot && strcmp(dot, ".hex") == 0){
@@ -221,7 +226,7 @@ static long load_img(){
 		return 4096;
 	}
 
-	FILE *fp = fopen(bin_img, "rb");
+	FILE *fp = fopen(img_file, "rb");
 	assert(fp);
 
 	fseek(fp, 0, SEEK_END);

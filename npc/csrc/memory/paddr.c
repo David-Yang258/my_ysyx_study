@@ -1,10 +1,13 @@
 #include "../../include/paddr.h"
+#include <string.h>
 
 static uint8_t *pmem = NULL;
+extern uint32_t *memory;
+extern uint32_t mem_words;
 
 void init_mem(){
 #if defined (CONFIG_PMEM_MALLOC)
-	pmem = malloc(CONFIG_MSIZE);
+	pmem = (uint8_t*)memory + 0x80000000;
 	assert(pmem);
 #endif
 }

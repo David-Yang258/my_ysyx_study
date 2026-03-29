@@ -5,7 +5,7 @@ INC_PATH ?= include/
 
 FILELIST_MK = $(shell find -L ./csrc -name "filelist.mk")
 VERILATOR = verilator
-VERILATOR_CFLAGS += -MMD --build -cc  -Wall -trace -O2 
+VERILATOR_CFLAGS += -MMD --build -cc  -Wall -trace -O2  
 
 BUILD_DIR = ./build
 OBJ_DIR = $(BUILD_DIR)/obj_dir

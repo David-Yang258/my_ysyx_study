@@ -4,13 +4,16 @@
 #include "../../include/debug.h"
 #include "../../include/trace.h"
 #include "../../include/isa/isa-def.h"
+#include "../../include/config.h"
 #include "../../build/obj_dir/Vtop___024root.h"
+#include "../../include/paddr.h"
 
 #define MAX_INST_TO_PRINT 20
 #define NR_GPR 16
 
 
 extern Vtop* top;
+static word_t old_pc = 0;
 
 extern "C" int pmem_read(int);
 void isa_reg_display();
@@ -18,11 +21,20 @@ word_t ReEvalWPs();
 bool trace_inst2ringbuf(word_t, uint32_t);
 void iringbuf_display();
 void trace_func_ret(paddr_t);
+void difftest_step(vaddr_t, vaddr_t);
 
 CPU_state cpu = {};
 
+void init_diff_cpu(){
+	cpu.pc = RESET_VECTOR;
+	for (int i = 0;i<NR_GPR;i++){
+		cpu.gpr[i] = 0;
+	}
+}
+
 static void exec_once(){
 	if(top->clk != 0) top->clk = 0;
+	old_pc = top->pc;
 	top->inst = pmem_read(top->pc);	
 #ifdef ITRACE_COND
 	trace_inst2ringbuf(top->pc, top->inst);
@@ -44,6 +56,8 @@ static void exec_once(){
 static void execute(uint64_t n){
 	for (;n>0; n--){
 		exec_once();
+		//IFDEF(CONFIG_DIFFTEST,difftest_step(old_pc, cpu.pc));
+		//difftest_step(old_pc, cpu.pc);
 		if(npc_state.state != NPC_RUNNING) break;
 	}
 }

@@ -18,5 +18,6 @@ module gpr #(ADDR_WIDTH = 5, DATA_WIDTH = 32) (
   assign rdata2 = rdata2_mux;
   always @(posedge clk) begin
     if (wen) rf[waddr] <= wdata;
+	rf[0] <= 32'b0;
   end
 endmodule

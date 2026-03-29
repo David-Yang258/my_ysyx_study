@@ -28,14 +28,16 @@ enum {
   TYPE_R,// none
 };
 
-#define src1R() do { *src1 = R(rs1); } while (0)
-#define src2R() do { *src2 = R(rs2); } while (0)
+#define src1R() do { *src1  = R(rs1); } while (0)
+#define src2R() do { *src2  = R(rs2); } while (0)
+#define shamT() do { *shamt = rs2   ; } while (0)
 #define immI() do { *imm = SEXT(BITS(i, 31, 20), 12); } while(0)
 #define immU() do { *imm = SEXT(BITS(i, 31, 12), 20) << 12; } while(0)
 #define immS() do { *imm = (SEXT(BITS(i, 31, 25), 7) << 5) | BITS(i, 11, 7); } while(0)
 #define immJ() do { *imm = SEXT((BITS(i, 31, 31) << 20) | (BITS(i, 19, 12) << 12) | (BITS(i, 20, 20) << 11) | (BITS(i, 30, 21) << 1), 21);} while(0)
 #define immB() do { *imm = SEXT((BITS(i, 31, 31) << 12) | (BITS(i, 30, 25) << 5) | (BITS(i, 7, 7) << 11) | (BITS(i, 11, 8) << 1), 13);} while(0)
 
+#define OP_SX 19
 void trace_func_call(paddr_t, paddr_t);
 void trace_func_ret(paddr_t);
 
@@ -45,11 +47,15 @@ static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_
   int rs2 = BITS(i, 24, 20);
   *shamt = rs2;
   *rd     = BITS(i, 11, 7);
+  int SXXI= BITS(i, 6 , 0);
   switch (type) {
     case TYPE_I: src1R();          immI(); break;
     case TYPE_U:                   immU(); break;
     case TYPE_S: src1R(); src2R(); immS(); break;
-	case TYPE_R: src1R(); src2R();		   break;
+	case TYPE_R: src1R();
+				 if(SXXI == OP_SX) shamT();
+	  			 else 			   src2R();
+										   break;
     case TYPE_N: break;
 	case TYPE_J: 				   immJ(); break;
 	case TYPE_B: src1R(); src2R(); immB(); break;
@@ -82,8 +88,8 @@ static int decode_exec(Decode *s) {
   INSTPAT("0000000 ????? ????? 001 ????? 01100 11", sll    , R, R(rd) = src1 << (src2 & 0x1F));
   INSTPAT("0000000 ????? ????? 101 ????? 01100 11", srl    , R, R(rd) = src1 >> (src2 & 0x1F));
   INSTPAT("0100000 ????? ????? 101 ????? 01100 11", sra    , R, R(rd) = (signed)src1 >> (src2 & 0x1F));
-  //INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add    , R, R(rd) = src1 + src2);
-  INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add    , R, R(rd) = src1 - src2);
+  INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add    , R, R(rd) = src1 + src2);
+  //INSTPAT("0000000 ????? ????? 000 ????? 01100 11", add    , R, R(rd) = src1 - src2);
   INSTPAT("0100000 ????? ????? 000 ????? 01100 11", sub    , R, R(rd) = src1 - src2);
   INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = (signed)src1 * (signed)src2);
   INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = (uint32_t)(((int64_t)(int32_t)src1 * (int64_t)(int32_t)src2)>> 32));

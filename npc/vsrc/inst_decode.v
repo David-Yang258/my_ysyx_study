@@ -52,7 +52,7 @@ always@(*) begin
 		{OPCODE_I_TYPE2,3'b??0}    : begin
 		   	imm = immI; rs1 = inst[19:15];                      rd = inst[11:7];
 		end
-		{OPCODE_I_TYPE2,3'b011}    : begin
+		{OPCODE_I_TYPE2,3'b?11}    : begin
 		   	imm = immI; rs1 = inst[19:15];                      rd = inst[11:7];
 		end
 		{OPCODE_I_TYPE3,3'b000}    : begin
@@ -74,7 +74,7 @@ always@(*) begin
 		   	            rs1 = inst[19:15]; rs2   = inst[24:20]; rd = inst[11:7];
 		end
 		{OPCODE_J_TYPE ,FUNCT3_IGN}: begin
-		   	imm = immJ; rs1 = inst[19:15]; rs2   = inst[24:20];
+		   	imm = immJ; rs1 = inst[19:15]; 					    rd = inst[11:7];
 		end
 		default: ;
 	endcase
