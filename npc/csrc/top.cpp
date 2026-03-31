@@ -40,6 +40,13 @@ extern "C" void assert_abort(){
 	npc_state.halt_pc = top->pc;
 	npc_state.halt_ret = top->rootp->top__DOT__inst_gpr__DOT__rf[10];
 }
+extern "C" void ecall(){
+	printf("ECALL!\n");
+	printf("npc mcause: %x\n", top->rootp->top__DOT__inst_csr__DOT__mcause);
+	printf("npc mtvec: %x\n", top->rootp->top__DOT__inst_csr__DOT__mtvec);
+	printf("npc mepc: %x\n", top->rootp->top__DOT__inst_csr__DOT__mepc);
+}
+
 int parse_hex_line(const char *filename, uint32_t *memory, size_t mem_size);
 uint32_t pmem_init(const char* filename, uint32_t size_bytes, uint32_t** memory, size_t*mem_words);
 

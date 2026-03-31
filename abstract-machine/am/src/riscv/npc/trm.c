@@ -13,7 +13,7 @@ static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); /
 
 void putch(char ch) {
 	asm volatile(
-		"li t0, 0x10000000\n"
+		"li t0, 0x87000000\n"
 		"sb %0, 0(t0)"
 		:
 		: "r"(ch)

@@ -178,7 +178,17 @@ config FTRACE
 
 config FTRACE_COND
   depends on FTRACE
-  string "Onlt trace function when condition is true"
+  string "Only trace function when condition is true"
+  default "false"
+
+config ETRACE
+  depends on TRACE
+  bool "enable ETRACE"
+  default n
+
+config ETRACE_COND
+  depends on  ETRACE
+  string "ETRACE is on only when condition is true"
   default "false"
 
 config DIFFTEST

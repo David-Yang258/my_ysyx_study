@@ -1,18 +1,23 @@
 module inst_exec (
 	input 				clk,
 	input 		[6:0 ] 	funct7,
+	input  		[4:0 ]  rs2,
 	input 		[2:0 ] 	funct3,
 	input 		[4:0 ]  rd,
 	input 		[31:0] 	src1,
 	input 		[31:0] 	src2,/* verilator lint_off UNUSEDSIGNAL */
 	input       [4:0 ] 	shamt,/* verilator lint_on UNUSEDSIGNAL */
 	input 		[31:0] 	imm,
+	input 		[31:0]  csr_src,
 	input 		[6:0 ] 	opcode,
 	input 		[31:0]  pc,
 	output reg 	[31:0] 	rd_wdata,
+	output reg  [31:0]  csr_wdata1,
+	output reg  [31:0]  csr_wdata2,
 	output reg			reg2reg,
 	output reg			reg2mem,
 	output reg			mem2reg,
+	output reg  		reg2csr,
 	output reg			setpc,
 	output reg	[31:0]  setbits
 );
@@ -20,6 +25,7 @@ import "DPI-C" function void pmem_write(input int waddr, input int wdata, input 
 import "DPI-C" function int pmem_read(input int raddr);
 import "DPI-C" function void trace_func_call(input int pc, input int dnpc, bit clk);
 import "DPI-C" function void assert_abort();
+import "DPI-C" function void ecall();
 
 localparam OPCODE_R_TYPE1= 7'b0010011;
 localparam OPCODE_R_TYPE2= 7'b0110011;
@@ -27,6 +33,7 @@ localparam OPCODE_R_TYPE2= 7'b0110011;
 localparam OPCODE_I_TYPE1= 7'b0000011;
 localparam OPCODE_I_TYPE2= 7'b0010011;
 localparam OPCODE_I_TYPE3= 7'b1100111;
+localparam OPCODE_IC_TYPE= 7'b1110011;
 
 localparam OPCODE_S_TYPE = 7'b0100011;
 localparam OPCODE_B_TYPE = 7'b1100011;
@@ -47,6 +54,9 @@ localparam FUNCT7_SRL    = 7'b0000000;
 localparam FUNCT7_SRA    = 7'b0100000;
 localparam FUNCT7_OR     = 7'b0000000;
 localparam FUNCT7_AND    = 7'b0000000;
+
+localparam FUNCT7_ECALL  = 7'b0000000;
+localparam FUNCT7_MRET   = 7'b0011000;
 
 localparam FUNCT7_IGN 	 = 7'b???????;
    
@@ -92,15 +102,23 @@ localparam FUNCT3_SRA  = 3'b101;
 localparam FUNCT3_OR   = 3'b110;
 localparam FUNCT3_AND  = 3'b111;
 
+localparam FUNCT3_CSRRW= 3'b001;
+localparam FUNCT3_CSRRS= 3'b010;
+localparam FUNCT3_CSRRC= 3'b011;
+localparam FUNCT3_ECALL= 3'b000;
+localparam FUNCT3_MRET = 3'b000;
+
 localparam FUNCT3_IGN  = 3'b???;
 
 reg [31:0] mem_raddr;
 reg [31:0] mem_waddr;
+//reg [31:0] csr_temp;
 
 always@(*) begin
 	reg2reg = 1'b0;
 	reg2mem = 1'b0;
 	mem2reg = 1'b0;
+	reg2csr = 1'b0;
 	setpc   = 1'b0;
 	rd_wdata= 32'b0;
 	setbits = 32'b0;
@@ -308,7 +326,39 @@ always@(*) begin
 			endcase
 			reg2mem  = 1'b1;
 		end
-
+		//CSR HANDLE OPERATION
+		{FUNCT3_CSRRW,FUNCT7_IGN, OPCODE_IC_TYPE}: begin
+			rd_wdata = csr_src;
+			csr_wdata1 = src1;
+			reg2reg  = 1'b1;
+			reg2csr  = 1'b1;
+		end	
+		{FUNCT3_CSRRS,FUNCT7_IGN, OPCODE_IC_TYPE}: begin
+			rd_wdata = csr_src;
+			csr_wdata1= csr_src | src1;
+			reg2reg  = 1'b1;
+			reg2csr  = 1'b1;
+		end	
+		{FUNCT3_CSRRC,FUNCT7_IGN, OPCODE_IC_TYPE}: begin
+			rd_wdata = csr_src;
+			csr_wdata1= csr_src & ~src1;
+			reg2reg  = 1'b1;
+			reg2csr  = 1'b1;
+		end	
+		{FUNCT3_ECALL,FUNCT7_ECALL,OPCODE_IC_TYPE}:begin
+			if(rs2 == 5'b00000) begin
+				ecall();
+				csr_wdata1=pc;
+				csr_wdata2=src1;	
+				setpc     = 1'b1;
+				setbits   = csr_src;
+				reg2csr   = 1'b1;
+			end
+		end
+		{FUNCT3_MRET, FUNCT7_MRET, OPCODE_IC_TYPE}:begin
+			setpc    = 1'b1;
+			setbits  = csr_src;
+		end
 		default: ;//assert_abort();
 	endcase	
 end

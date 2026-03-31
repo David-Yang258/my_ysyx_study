@@ -37,9 +37,31 @@ enum {
 #define immJ() do { *imm = SEXT((BITS(i, 31, 31) << 20) | (BITS(i, 19, 12) << 12) | (BITS(i, 20, 20) << 11) | (BITS(i, 30, 21) << 1), 21);} while(0)
 #define immB() do { *imm = SEXT((BITS(i, 31, 31) << 12) | (BITS(i, 30, 25) << 5) | (BITS(i, 7, 7) << 11) | (BITS(i, 11, 8) << 1), 13);} while(0)
 
+#ifndef CONFIG_RV64
+#define ECALL(npc) do {bool success; npc=isa_raise_intr(isa_reg_str2val("a5",&success), s->pc);}while(0)
+#define ETRACE(inst) do {bool success; word_t a5 = isa_reg_str2val("a5",&success); etrace(inst, cpu.csr.mepc, cpu.csr.mcause, a5, cpu.csr.mtvec);}while(0)
+#else
+#define ECALL(npc) do {bool success; npc=isa_raise_intr(isa_reg_str2val("a7",&success), s->pc);}while(0)
+#define ETRACE(inst) do {bool success; word_t a7 = isa_reg_str2val("a7",&success); etrace(inst, cpu.csr.mepc, cpu.csr.mcause, a7, cpu.csr.mtvec);}while(0)
+#endif
+//What ecall should be done
+//1.store pc into mepc
+//2.write "env call" abnormality into mcause
+//3.set dnpc = mtvec
+//4.push all gpr onto stack
+//5.read mcause
+//6.if mcause is ecall, read value from $a7(system call NO
+//7.store the return value from env cal into $a0
+//8.restore "context", pop all old gpr into gpr
+//9. call mret, continue from the inst after ecall 
+#define CSR(i) *csr_register(i)
+
 #define OP_SX 19
+
 void trace_func_call(paddr_t, paddr_t);
 void trace_func_ret(paddr_t);
+void etrace(const char*, vaddr_t, word_t, word_t, word_t);
+static vaddr_t *csr_register(word_t);
 
 static void decode_operand(Decode *s, int *rd, word_t *src1, word_t *src2, word_t *imm, int type, word_t *shamt) {
   uint32_t i = s->isa.inst;
@@ -93,6 +115,7 @@ static int decode_exec(Decode *s) {
   INSTPAT("0100000 ????? ????? 000 ????? 01100 11", sub    , R, R(rd) = src1 - src2);
   INSTPAT("0000001 ????? ????? 000 ????? 01100 11", mul    , R, R(rd) = (signed)src1 * (signed)src2);
   INSTPAT("0000001 ????? ????? 001 ????? 01100 11", mulh   , R, R(rd) = (uint32_t)(((int64_t)(int32_t)src1 * (int64_t)(int32_t)src2)>> 32));
+  INSTPAT("0000001 ????? ????? 011 ????? 01100 11", mulh   , R, R(rd) = (uint32_t)(((uint64_t)(uint32_t)src1 * (uint64_t)(uint32_t)src2)>> 32));
   INSTPAT("0000001 ????? ????? 110 ????? 01100 11", rem    , R, R(rd) = (signed)src1 % (signed)src2);
   INSTPAT("0000001 ????? ????? 111 ????? 01100 11", remu   , R, R(rd) = src1 % src2);
   INSTPAT("0000001 ????? ????? 100 ????? 01100 11", div    , R, R(rd) = (signed)src1 / (signed)src2);
@@ -139,6 +162,14 @@ static int decode_exec(Decode *s) {
   INSTPAT("??????? ????? ????? 110 ????? 00100 11", ori    , I, R(rd) = src1 | imm);
   INSTPAT("0000000 ????? ????? 110 ????? 01100 11", or     , R, R(rd) = src1 | src2);
   INSTPAT("0000000 ????? ????? 111 ????? 01100 11", and    , R, R(rd) = src1 & src2);
+  INSTPAT("0000000 00000 00000 000 00000 11100 11", ecall  , N, ECALL(s->dnpc);ETRACE("ecall"););
+  INSTPAT("??????? ????? ????? 001 ????? 11100 11", csrrw  , I, R(rd) = CSR(imm); CSR(imm) = src1;);
+  INSTPAT("??????? ????? ????? 010 ????? 11100 11", csrrs  , I, R(rd) = CSR(imm); CSR(imm) = CSR(imm) |= src1;);
+  INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I, R(rd) = CSR(imm); CSR(imm) = CSR(imm) & ~src1;);
+  INSTPAT("??????? ????? ????? 011 ????? 11100 11", csrrc  , I, R(rd) = CSR(imm); CSR(imm) = CSR(imm) & ~src1;);
+  INSTPAT("0011000 00010 00000 000 00000 11100 11", mret   , R, s->dnpc = CSR(0x341);ETRACE("mret"););
+
+  //new instruction should be implemented above!!!!!
   INSTPAT("??????? ????? ????? ??? ????? ????? ??", inv    , N, INV(s->pc));
   INSTPAT_END();
 
@@ -153,4 +184,20 @@ int isa_exec_once(Decode *s) {
   s->isa.inst = inst_fetch(&s->snpc, 4);
   IFDEF(CONFIG_ITRACE, trace_inst2ringbuf(s->pc, s->isa.inst));
   return decode_exec(s);
+}
+
+static vaddr_t *csr_register(word_t imm){
+  imm &= 0xFFF;
+  switch(imm){
+	  case 0x0300: return &(cpu.csr.mstatus);
+	  case 0x0341: return &(cpu.csr.mepc   );
+	  case 0x0342: return &(cpu.csr.mcause );
+	  case 0x0305: return &(cpu.csr.mtvec  );
+	  case 0x0304: return &(cpu.csr.mie    );
+	  case 0x0344: return &(cpu.csr.mip    );
+	  case 0x0f12: return &(cpu.csr.marchid);
+	  case 0x0f11: return &(cpu.csr.mvendorid);
+	  default: printf("Wrong csr, got addr %x\n", imm);
+			   panic("Wrong csr to access!!!!!!");
+  }
 }

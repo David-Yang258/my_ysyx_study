@@ -32,6 +32,10 @@ static void restart() {
 
   /* The zero register is always 0. */
   cpu.gpr[0] = 0;
+  /* Initialize mstatus with 0x1800 to support difftest */
+  cpu.csr.mstatus = 0x1800;
+  cpu.csr.mvendorid = 0x79737978;
+  cpu.csr.marchid = 26030090;
 }
 
 void init_isa() {

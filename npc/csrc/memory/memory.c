@@ -114,7 +114,7 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int clk){
 			char2put = byte_write[i];
 		}
 	}
-	if(waddr == 0x10000000) {putchar(char2put);return;}
+	if(waddr == 0x87000000) {putchar(char2put);return;}
 #ifdef MTRACE_COND
 	pmem_written_display(waddr, 4, current);
 #endif

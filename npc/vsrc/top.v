@@ -19,9 +19,16 @@ wire [2:0 ] funct3;
 
 wire [31:0] src1;
 wire [31:0] src2;
+wire [31:0] csr_rdata;
 wire [31:0] rd_wdata;
+wire [11:0] csr_waddr1;
+wire [11:0] csr_waddr2;
+wire [31:0] csr_wdata1;
+wire [31:0] csr_wdata2;
+
 
 wire 		reg_wen;
+wire 		csr_wen;
 /* verilator lint_off UNUSEDSIGNAL */wire 		mem_wen; /* verilator lint_on UNUSEDSIGNAL */
 
 pc inst_pc(
@@ -38,6 +45,8 @@ inst_decode inst_inst_decode(
 	.rd 		(rd  	),
 	.rs1 		(rs1 	),
 	.rs2 		(rs2 	),
+	.csr_waddr1 (csr_waddr1),
+	.csr_waddr2 (csr_waddr2),
 	.shamt 		(shamt 	),
 	.funct7 	(funct7 ),
 	.funct3 	(funct3 ),
@@ -47,18 +56,23 @@ inst_decode inst_inst_decode(
 inst_exec  inst_inst_exec(
 	.clk 		(clk 	),
 	.funct7 	(funct7 ),
+	.rs2 		(rs2 	),
 	.funct3 	(funct3 ),
 	.rd 		(rd 	),
 	.src1 		(src1 	),
 	.src2 		(src2 	),
 	.shamt 		(shamt 	),
 	.imm 		(imm 	),
+	.csr_src 	(csr_rdata),
 	.opcode 	(opcode ),
 	.pc 		(pc  	),
 	.rd_wdata 	(rd_wdata),
+	.csr_wdata1 (csr_wdata1),
+	.csr_wdata2 (csr_wdata2),
 	.reg2reg 	(reg_wen),
 	.reg2mem 	(mem_wen),
 	.mem2reg 	(reg_wen),
+	.reg2csr 	(csr_wen),
 	.setpc 		(jmp_set),
 	.setbits 	(setbits)
 );
@@ -72,5 +86,16 @@ gpr inst_gpr(
 	.raddr2 	(rs2 	),
 	.rdata1 	(src1 	),
 	.rdata2 	(src2 	)
+);
+
+csr inst_csr(
+	.clk 		(clk 	  ),
+	.csr_wen 	(csr_wen  ),
+	.csr_raddr 	(imm[11:0]),
+	.csr_rdata  (csr_rdata),
+	.csr_waddr1 (csr_waddr1[11:0]),
+	.csr_waddr2 (csr_waddr2[11:0]),
+	.csr_wdata1 (csr_wdata1),
+	.csr_wdata2 (csr_wdata2)
 );
 endmodule

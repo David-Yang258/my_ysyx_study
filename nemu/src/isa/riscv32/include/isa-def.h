@@ -18,15 +18,28 @@
 
 #include <common.h>
 
+typedef struct{
+  word_t 	mcause; 	//M Abnormality cause
+  vaddr_t 	mepc; 		//M Abnormality pc
+  word_t 	mstatus; 	//M mode status
+  word_t 	mtvec; 		//M mode trap vector
+  word_t 	mie; 		//M mode interrupt ena
+  word_t 	mip; 		//M mode interrupt hang up
+  word_t    mvendorid;  //M mode vendor id
+  word_t    marchid; 	//M mode arch id
+} MUXDEF(CONFIG_RV64, riscv64_CSRs, riscv32_CSRs);
+
 typedef struct {
   word_t gpr[MUXDEF(CONFIG_RVE, 16, 32)];
   vaddr_t pc;
+  MUXDEF(CONFIG_RV64, riscv64_CSRs, riscv32_CSRs) csr;
 } MUXDEF(CONFIG_RV64, riscv64_CPU_state, riscv32_CPU_state);
 
 // decode
 typedef struct {
   uint32_t inst;
 } MUXDEF(CONFIG_RV64, riscv64_ISADecodeInfo, riscv32_ISADecodeInfo);
+
 
 #define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
 

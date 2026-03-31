@@ -121,3 +121,9 @@ void trace_func_ret(paddr_t pc){
 			);
 	--call_depth;
 }
+
+void etrace(const char *iname, vaddr_t mepc, word_t mcause, word_t gpr, word_t mtvec){
+#ifdef ETRACE_COND
+	printf("etrace fname: %s, mepc = " FMT_WORD ", mcause = " FMT_WORD ", gpr(a5/a7) = " FMT_WORD ", mtvec = " FMT_WORD "\n", iname, mepc, mcause, gpr, mtvec);
+#endif
+}

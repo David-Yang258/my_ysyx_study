@@ -8,7 +8,11 @@ extern Vtop* top;
 
 bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc){
 	int cpu_reg_num = ARRLEN(ref_r->gpr);
-	if(top->pc != ref_r->pc) return false;
+	if(top->pc != ref_r->pc) {
+		printf("npc pc is %x\n", top->pc);
+		printf("ref pc is %x\n", ref_r->pc);
+		return false;
+	}
 	for(int i = 0;i<cpu_reg_num;i++){
 		if(ref_r->gpr[i] != top->rootp->top__DOT__inst_gpr__DOT__rf[i]){
 			 Log("%s Reg content is different after executing instruction at pc ="       FMT_WORD
