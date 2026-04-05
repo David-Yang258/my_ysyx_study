@@ -100,7 +100,7 @@ extern "C" int pmem_read(int raddr){
 
 }
 extern "C" void pmem_write(int waddr, int wdata, char wmask, int clk){
-	if(clk == 1) return;
+	//if(clk == 1) return;
 	//printf("waddr: %x\n", waddr);
 	uint32_t aligned_addr = waddr & ~0x3u;
 	uint32_t word_addr = aligned_addr / 4;

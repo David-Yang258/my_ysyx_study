@@ -1,0 +1,98 @@
+/*---------------------
+*@port bus_interface: default bus interfaces
+*@port branch_happen: branch state
+*@port stall 		: pipeline stop
+*@port ibus_cmd  	: ifu cmd to read from memory
+*@port inst  		: instruction to IDU
+*@function :Fetch inst from mem and transfer to IDU
+*---------------------*/
+module ifu(
+	`include "bus_interface.vh"
+	input 							  clk,
+	input 							  rst_n,
+	input 							  branch_happen,
+	input  		[`BUS_DATA_WIDTH-1:0] branch_addr,
+	input 							  stall,
+	input 						 	  mem_ready,
+	input  		[`BUS_DATA_WIDTH-1:0] mem_inst,
+	output reg  	 				  mem_cmd,
+	output reg	[`MEM_ADDR_WIDTH-1:0] mem_addr,
+	output reg 	[`BUS_DATA_WIDTH-1:0] pc,
+	output reg 	[`BUS_DATA_WIDTH-1:0] inst,
+	output      [2:0] 				  o_ifu_state
+);
+reg [2:0]  				  ifu_state; 		 //IFU state
+
+reg  					  need2fetch;
+
+
+localparam IFU_IDLE 		= 3'b000;//IDLE
+localparam IFU_REQ 			= 3'b001;
+localparam IFU_GET_INST     = 3'b010;
+localparam IFU_WAIT_WBU 	= 3'b011;//Waiting for WBU to write
+localparam IFU_WRITE_BACK 	= 3'b100;//Waiting for WBU to write
+localparam IFU_JMP			= 3'b101;//Handle branch if there is one 
+
+assign o_ifu_state = ifu_state;
+
+always@(posedge clk or negedge rst_n) begin
+	if(!rst_n) begin 
+		pc        <= `PC_ENTRY; 	//ENTRY:0x80000000
+		mem_addr  <= `PC_ENTRY;
+		ifu_state <= IFU_IDLE; 		//IDLE
+		inst 	  <= 32'h00000013;  //NOP
+		mem_cmd   <= `MEM_CMD_IDLE; //IDLE cmd to mem
+		bus_error <= 1'b0;
+ 		need2fetch<= 1'b1;
+		o_valid   <= 1'b0;
+	end
+	else begin
+		/* 
+		* if IFU_IDLE ,check if there's a branch, if not, 
+		* check whether there's a inst waiting 2 fetch or not.
+		* IFU_IDLE -> IFU_REQUESTING -> IFU_WAIT
+		*/
+		case(ifu_state)
+			IFU_IDLE: begin
+				if(!stall && need2fetch) begin
+					mem_addr  <= pc;
+					mem_cmd   <= `MEM_CMD_READ;
+					ifu_state <= IFU_REQ;
+					need2fetch<= 1'b0;
+				end
+			end
+			IFU_REQ: begin
+				if(mem_ready) begin 
+					ifu_state <= IFU_GET_INST;
+				end
+			end
+			IFU_GET_INST: begin
+				inst 	  <= mem_inst;
+				mem_cmd   <= `MEM_CMD_IDLE;
+				if(!stall && i_ready)begin
+					o_valid   <= 1'b1;
+					ifu_state <= IFU_WAIT_WBU;
+				end
+			end
+			IFU_WAIT_WBU: begin
+				if(!stall && i_ready) begin
+					ifu_state <= IFU_WRITE_BACK;
+					o_valid   <= 1'b0;
+				end
+			end
+			IFU_WRITE_BACK:begin
+				if(i_ready) ifu_state <= IFU_JMP;
+			end
+			IFU_JMP:begin
+				if(branch_happen) begin
+					pc <= branch_addr;
+				end
+				else pc <= pc + 4;
+				need2fetch <= 1'b1;
+				if(!stall) ifu_state  <= IFU_IDLE;
+			end
+			default: bus_error <= 1'b1;
+		endcase;
+	end
+end
+endmodule

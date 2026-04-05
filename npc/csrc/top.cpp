@@ -95,8 +95,20 @@ int main(int argc, char* argv[]){
 	pmem_init(mem_file,MEMORY_SIZE,&memory, &mem_words);
 
 	top->clk  = 0;
-	top->rootp->top__DOT__inst_pc__DOT__pc_cnt = 0x80000000;
+	top->rst_n= 1;
 	top->eval();
+	top->rst_n=0;
+	top->eval();
+	top->rst_n=1;
+	top->eval();
+	printf("pc = %x\n", top->pc);
+
+	while(top->o_ifu_state != 3){
+		top->clk = 1;
+		top->eval();
+		top->clk = 0;
+		top->eval();
+	}
 
 	printf("Entered main\n");
 		init_sdb();

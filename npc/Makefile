@@ -1,6 +1,7 @@
 TOPNAME = top
 WORK_DIR = ex7
 NXDC_FILES = constr/top.nxdc
+VH_INC_PATH = nvsrc/include
 INC_PATH ?= include/
 
 FILELIST_MK = $(shell find -L ./csrc -name "filelist.mk")
@@ -24,7 +25,8 @@ CAPSTONE_CFLAGS += -I $(abspath tools/capstone/repo/include)
 #	python3 $(NVBOARD_HOME)/scripts/auto_pin_bind.py $^ $@
 
 # project source
-VSRCS = $(shell find $(abspath ./vsrc/) -name "*.v")
+#VSRCS = $(shell find $(abspath ./vsrc/) -name "*.v")
+VSRCS = $(shell find $(abspath ./nvsrc/) -name "*.v")
 CSRCS = $(shell find $(abspath ./csrc/) -name "*.c" -or -name "*.cc" -or -name "*.cpp")
 #CSRCS += $(SRC_AUTO_BIND)
 
@@ -33,6 +35,7 @@ CSRCS = $(shell find $(abspath ./csrc/) -name "*.c" -or -name "*.cc" -or -name "
 
 # rules for verilator
 INCFLAGS = $(addprefix -I, $(INC_PATH))
+VH_INCFLAGS = $(addprefix -I, $(VH_INC_PATH))
 CXXFLAGS += $(INCFLAGS) -DTOP_NAME="\"V$(TOPNAME)\"" $(CAPSTONE_CFLAGS) 
 LDFLAGS  += -lreadline $(LIBCAPSTONE) 
 
@@ -41,7 +44,8 @@ $(BIN): $(VSRCS) $(CSRCS) #$(NVBOARD_ARCHIVE)
 	$(VERILATOR) $(VERILATOR_CFLAGS) \
 		--top-module $(TOPNAME) $^ \
 		$(addprefix -CFLAGS , $(CXXFLAGS)) $(addprefix -LDFLAGS , $(LDFLAGS)) \
-		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN))
+		--Mdir $(OBJ_DIR) --exe -o $(abspath $(BIN)) \
+		$(VH_INCFLAGS)
 
 all: default
 
