@@ -6,8 +6,8 @@
 *@port inst  		: instruction to IDU
 *@function :Fetch inst from mem and transfer to IDU
 *---------------------*/
+`include "bus_define.vh"
 module ifu(
-	`include "bus_interface.vh"
 	input 							  clk,
 	input 							  rst_n,
 	input 							  branch_happen,
@@ -15,6 +15,9 @@ module ifu(
 	input 							  stall,
 	input 						 	  mem_ready,
 	input  		[`BUS_DATA_WIDTH-1:0] mem_inst,
+	input 							  i_ready,
+	output reg  					  o_valid,
+	output reg 						  bus_error,
 	output reg  	 				  mem_cmd,
 	output reg	[`MEM_ADDR_WIDTH-1:0] mem_addr,
 	output reg 	[`BUS_DATA_WIDTH-1:0] pc,

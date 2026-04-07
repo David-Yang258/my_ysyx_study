@@ -43,15 +43,14 @@ static void exec_once(){
 	//printf("IFU: ifu_valid = %x\n", top->rootp->top__DOT__ifu_valid);
 	//printf("EXU: jal = %x\n", top->rootp->top__DOT__jal);
 	//printf("LSU: lsu_valid = %x\n", top->rootp->top__DOT__inst_lsu__DOT__o_valid);
-	printf("IFU: pc   = %x\n", top->pc);
-	printf("IFU: inst = %x\n", top->inst);
+	//printf("IFU: pc   = %x\n", top->pc);
+	//printf("IFU: inst = %x\n", top->inst);
 #ifdef ITRACE_COND
 	trace_inst2ringbuf(top->pc, top->inst);
 #endif
 #ifdef FTRACE_COND
 	if(top->inst == 0x00008067)trace_func_ret(top->pc);
 #endif
-#define DEBUGING
 	do{
 #ifdef DEBUGING
 		printf("IFU: ifu_state = %x\n", top->rootp->top__DOT__inst_ifu__DOT__ifu_state);

@@ -18,7 +18,7 @@ module mem(
 import "DPI-C" function int pmem_read(input int raddr);
 import "DPI-C" function void pmem_write(input int waddr, input int wdata, input byte mask, bit clk);
 
-`define MAX_DELAY 5'd5
+`define MAX_DELAY 5'd0
 reg [4:0] delay;
 
 always@(posedge clk or negedge rst_n) begin
@@ -28,7 +28,7 @@ always@(posedge clk or negedge rst_n) begin
 	end
 	else begin
 		if(mem_re1 | mem_re2) begin
-			if(delay < `MAX_DELAY) begin 
+			if(delay != `MAX_DELAY) begin 
 				delay <= delay + 5'b1;
 				mem_ready<= 1'b0;
 			end
@@ -36,10 +36,11 @@ always@(posedge clk or negedge rst_n) begin
 				mem_rdata1 <= pmem_read(mem_raddr1);
 				mem_rdata2 <= pmem_read(mem_raddr2);	
 				mem_ready  <= 1'b1;
+				delay      <= 5'b0;
 			end
 		end
 		else if(mem_we) begin
-			if(delay < `MAX_DELAY) begin
+			if(delay != `MAX_DELAY) begin
 				delay <= delay + 5'b1;
 				mem_ready<= 1'b0;
 			end
@@ -56,6 +57,7 @@ always@(posedge clk or negedge rst_n) begin
 				default: ;
 				endcase
 				mem_ready <= 1'b1;
+				delay      <= 5'b0;
 			end
 		end
 		else begin 

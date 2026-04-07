@@ -25,8 +25,10 @@
 */
 `include "bus_define.vh"
 module idu (
-	`include "bus_interface.vh"
 	input 		[`BUS_DATA_WIDTH-1:0] 	inst,
+	input 								i_ready,
+	output     	 						o_valid,
+	output reg 						    bus_error,
 
    	output reg 	[`BUS_DATA_WIDTH-1:0] 	imm,
 
@@ -269,7 +271,7 @@ always@(*) begin
 						csr_raddr  = CSR_MTVEC[11:0];
 						csr_waddr1 = CSR_MEPC[11:0];
 						csr_waddr2 = CSR_MCAUSE[11:0];
-						branch     = 1'b1;
+						//branch     = 1'b1;
 						wb_sel     = `ALU_TO_CSR_PC;
 						ecall 	   = 1'b1;
 					end

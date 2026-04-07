@@ -69,7 +69,7 @@ always@(posedge clk) begin
 			CSR_MCAUSE: mcause <= csr_wdata2;
 			CSR_MEPC  : mepc   <= csr_wdata2;
 			CSR_MTVEC : mtvec  <= csr_wdata2;
-			CSR_MSTATUS:mstatus<= csr_wdata1;
+			CSR_MSTATUS:mstatus<= csr_wdata2;
 			default   :;
 		endcase
 	end

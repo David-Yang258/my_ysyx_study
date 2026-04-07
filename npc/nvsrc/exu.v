@@ -1,5 +1,5 @@
+`include "bus_define.vh"
 module exu (
-	`include "bus_interface.vh"
 	input 		[`BUS_DATA_WIDTH-1:0] 	imm,
 	input 		[`BUS_DATA_WIDTH-1:0] 	rs1_src,
 	input 		[`BUS_DATA_WIDTH-1:0] 	rs2_src,
@@ -20,6 +20,9 @@ module exu (
 	input 								csr_flag,
 
 	input 								idu_valid,
+	input 								i_ready,
+	output wire 						o_valid,
+	output reg 							bus_error,
 	output 								exu_ready,
 	
 	output  							branch_taken,
