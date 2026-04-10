@@ -1,7 +1,7 @@
 `include "bus_define.vh"
 module xbar(
 	input 								aclk,
-	input 								arst_n,
+	input 								reset,
 	input                               arb_arvalid,
 	input      [`MEM_ADDR_WIDTH-1:0]    arb_araddr,
 	output                              arb_arready,
@@ -97,8 +97,8 @@ reg mem_w_active;
 reg [`MEM_ADDR_WIDTH-1:0] arb_araddr_lock;
 reg [`MEM_ADDR_WIDTH-1:0] arb_awaddr_lock;
 
-always@(posedge aclk or negedge arst_n) begin
-	if(!arst_n) begin
+always@(posedge aclk) begin
+	if(reset) begin
 		uart_r_active <= 1'b0;
 		uart_w_active <= 1'b0;
 		mem_r_active  <= 1'b0;
@@ -131,8 +131,8 @@ reg uart_w_grant;
 reg mem_r_grant;
 reg mem_w_grant;
 
-always@(posedge aclk or negedge arst_n) begin
-	if(!arst_n) begin
+always@(posedge aclk) begin
+	if(reset) begin
 		 uart_r_grant <= 1'b0;
 		 uart_w_grant <= 1'b0;
 		 mem_r_grant  <= 1'b0;

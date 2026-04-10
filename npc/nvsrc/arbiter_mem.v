@@ -1,7 +1,7 @@
 `include "bus_define.vh"
 module arbiter_mem(
 	input 							  	aclk,
-	input 							  	arst_n,
+	input 							  	reset,
 
 	input                         		ifu_arvalid,
 	input      [`MEM_ADDR_WIDTH-1:0] 	ifu_araddr,
@@ -97,8 +97,8 @@ assign lsu_w_start = lsu_awvalid & lsu_wvalid;
 assign lsu_w_done  = arb_bvalid;
 
 //2.Work active
-always@(posedge aclk or negedge arst_n) begin
-	if(!arst_n) begin
+always@(posedge aclk) begin
+	if(reset) begin
 		ifu_r_active <= 1'b0;
 		lsu_r_active <= 1'b0;
 		lsu_w_active <= 1'b0;

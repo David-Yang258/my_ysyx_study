@@ -1,12 +1,73 @@
 `include "bus_define.vh"
-module top(
-	input clk,
-	input rst_n,
-	output [`BUS_DATA_WIDTH-1:0] pc,
-	output [`BUS_DATA_WIDTH-1:0] inst,
-	output [2:0] o_ifu_state,
-	output bus_error,
-	output Ebreak
+module ysyx_26030090(
+	//clock
+	input clock,
+	input reset,
+	input io_intertupt,
+	input             	io_master_awready,
+	output           	io_slave_awready ,
+    output            	io_master_awvalid,
+	input            	io_slave_awvalid ,
+    output  [31:0]  	io_master_awaddr ,
+	input  	[31:0]  	io_slave_awaddr  ,
+    output  [3:0]   	io_master_awid   ,
+	input  	[3:0]   	io_slave_awid    ,
+    output  [7:0]   	io_master_awlen  ,
+	input  	[7:0]   	io_slave_awlen   ,
+    output  [2:0]   	io_master_awsize ,
+	input  	[2:0]   	io_slave_awsize  ,
+    output  [1:0]   	io_master_awburst,
+	input  	[1:0]   	io_slave_awburst ,
+    input             	io_master_wready ,
+	output           	io_slave_wready  ,
+    output            	io_master_wvalid ,
+	input            	io_slave_wvalid  ,
+    output  [31:0]  	io_master_wdata  ,
+	input  	[31:0]  	io_slave_wdata   ,
+    output  [3:0]   	io_master_wstrb  ,
+	input  	[3:0]   	io_slave_wstrb   ,
+    output            	io_master_wlast  ,
+	input            	io_slave_wlast   ,
+    output            	io_master_bready ,
+	input            	io_slave_bready  ,
+    input             	io_master_bvalid ,
+	output           	io_slave_bvalid  ,
+    input   [1:0]   	io_master_bresp  ,
+	output 	[1:0]   	io_slave_bresp   ,
+    input   [3:0]   	io_master_bid    ,
+	output 	[3:0]   	io_slave_bid     ,
+    input             	io_master_arready,
+	output           	io_slave_arready ,
+    output            	io_master_arvalid,
+	input            	io_slave_arvalid ,
+    output  [31:0]  	io_master_araddr ,
+	input  	[31:0]  	io_slave_araddr  ,
+    output  [3:0]   	io_master_arid   ,
+	input  	[3:0]   	io_slave_arid    ,
+    output  [7:0]   	io_master_arlen  ,
+	input  	[7:0]   	io_slave_arlen   ,
+    output  [2:0]   	io_master_arsize ,
+	input  	[2:0]   	io_slave_arsize  ,
+    output  [1:0]   	io_master_arburst,
+	input  	[1:0]   	io_slave_arburst ,
+    output            	io_master_rready ,
+	input            	io_slave_rready  ,
+    input             	io_master_rvalid ,
+	output           	io_slave_rvalid  ,
+    input   [1:0]   	io_master_rresp  ,
+	output 	[1:0]   	io_slave_rresp   ,
+    input   [31:0]  	io_master_rdata  ,
+	output 	[31:0]  	io_slave_rdata   ,
+    input             	io_master_rlast  ,
+	output           	io_slave_rlast   ,
+    input   [3:0]   	io_master_rid    ,
+	output 	[3:0]   	io_slave_rid     
+
+	//output [`BUS_DATA_WIDTH-1:0] pc,
+	//output [`BUS_DATA_WIDTH-1:0] inst,
+	//output [2:0] o_ifu_state,
+	//output bus_error,
+	//output Ebreak
 );
 
 wire 						jmp_set;
@@ -119,8 +180,8 @@ assign ifu_bresp   = 2'b00;
 assign ifu_bvalid  = 1'b0;
 
 ifu inst_ifu(
-	.clk 			(clk),
-	.rst_n  		(rst_n),
+	.clk 			(clock),
+	.reset  		(reset),
 	.branch_happen  (jmp_set),
 	.branch_addr 	(jmp_addr),
 	.stall 			(stall),
@@ -240,8 +301,8 @@ wire lsu_bvalid;
 wire lsu_bready;
 
 lsu inst_lsu(
-	.clk 			(clk),
-	.rst_n 			(rst_n),
+	.clk 			(clock),
+	.reset 			(reset),
 	.mem_re 		(lsu_mem_re),
 	.mem_we 		(final_mem_we),
 	.ls_type 		(ls_type),
@@ -283,8 +344,8 @@ lsu inst_lsu(
 );
 
 wbu inst_wbu(
-	.clk 			(clk),
-	.rst_n 			(rst_n),
+	.clk 			(clock),
+	.reset 			(reset),
 	.wb_sel 		(wb_sel),
 	.branch_taken 	(exu_branch_taken),
 	.rd_waddr 		(rd_addr),
@@ -320,7 +381,7 @@ wbu inst_wbu(
 );
 
 gpr inst_gpr(
-	.clk 			(clk),
+	.clk 			(clock),
 	.wdata 			(final_rd_wdata),
 	.waddr 			(final_rd_waddr),
 	.wen 			(final_reg_we),
@@ -331,7 +392,7 @@ gpr inst_gpr(
 );
 
 csr inst_csr(
-	.clk 			(clk),
+	.clk 			(clock),
 	.csr_wen1 		(final_csr_we1),
 	.csr_wen2		(final_csr_we2),
 	.csr_raddr 		(csr_raddr),
@@ -365,8 +426,8 @@ wire arb_bvalid;
 wire arb_bready;
 
 arbiter_mem inst_arbiter(
-	.aclk 			(clk),
-	.arst_n 		(rst_n),
+	.aclk 			(clock),
+	.reset 		(reset),
 
 	.ifu_arvalid 	(ifu_arvalid),
 	.ifu_araddr 	(ifu_araddr),
@@ -482,8 +543,8 @@ wire uart_bvalid;
 wire uart_bready;
 
 xbar inst_xbar(
-	.aclk            	(clk),
-	.arst_n          	(rst_n),
+	.aclk            	(clock),
+	.reset          	(reset),
 
 	.arb_arvalid        (arb_arvalid),
 	.arb_araddr         (arb_araddr),
@@ -553,8 +614,8 @@ xbar inst_xbar(
 );
 
 uart_axi inst_uart(
-	.aclk 			(clk),
-	.arst_n 		(rst_n),
+	.aclk 			(clock),
+	.reset 		(reset),
 
 	.arvalid 		(uart_arvalid),
 	.araddr 		(uart_araddr),
@@ -580,8 +641,8 @@ uart_axi inst_uart(
 );
 
 mem inst_mem(
-	.clk 			(clk),
-	.rst_n 			(rst_n),
+	.clk 			(clock),
+	.reset 			(reset),
 
 	.arvalid 		(mem_arvalid),
 	.araddr 		(mem_araddr),

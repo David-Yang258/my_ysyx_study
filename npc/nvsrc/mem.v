@@ -1,7 +1,7 @@
 module mem(
 	`include "bus_define.vh"
 	input 						 	 clk,
-	input 							 rst_n,
+	input 							 reset,
 
 	input      [`BUS_DATA_WIDTH-1:0] araddr,
 	input 							 arvalid,
@@ -47,8 +47,8 @@ reg [4:0] 				  delay;
 reg [`BUS_DATA_WIDTH-1:0] araddr_lock;
 reg [`BUS_DATA_WIDTH-1:0] awaddr_lock;
 
-always@(posedge clk or negedge rst_n) begin
-	if(!rst_n) begin
+always@(posedge clk) begin
+	if(reset) begin
 		delay 	 <= 5'b0;
 		mem_state<= MEM_IDLE;
 		rvalid  <= 1'b0;

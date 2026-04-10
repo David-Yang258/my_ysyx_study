@@ -1,7 +1,7 @@
 `include "bus_define.vh"
 module uart_axi(
 	input 								aclk,
-	input 								arst_n,
+	input 								reset,
 	
 	input 								arvalid,
 	input 		[`MEM_ADDR_WIDTH-1:0] 	araddr,
@@ -42,8 +42,8 @@ reg [4:0] delay;
 reg [`BUS_DATA_WIDTH-1:0] araddr_lock;
 reg [`BUS_DATA_WIDTH-1:0] awaddr_lock;
 
-always@(posedge aclk or negedge arst_n) begin
-if(!arst_n) begin
+always@(posedge aclk) begin
+if(reset) begin
             delay    	<= 5'b0;
             uart_state 	<= UART_IDLE;
             rvalid  	<= 1'b0;

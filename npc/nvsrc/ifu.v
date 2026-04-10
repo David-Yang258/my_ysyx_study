@@ -9,7 +9,7 @@
 `include "bus_define.vh"
 module ifu(
 	input 							  clk,
-	input 							  rst_n,
+	input 							  reset,
 	input 							  branch_happen,
 	input  		[`BUS_DATA_WIDTH-1:0] branch_addr,
 	input 							  stall,
@@ -67,8 +67,8 @@ assign awaddr  = 32'b0;
 assign wdata   = 32'b0;
 assign wstrb   = 4'b0;
 
-always@(posedge clk or negedge rst_n) begin
-	if(!rst_n) begin 
+always@(posedge clk) begin
+	if(reset) begin 
 		pc        <= `PC_ENTRY; 	//ENTRY:0x80000000
 		araddr    <= `PC_ENTRY;
 		ifu_state <= IFU_IDLE; 		//IDLE

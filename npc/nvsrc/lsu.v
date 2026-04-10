@@ -1,7 +1,7 @@
 `include "bus_define.vh"
 module lsu(
 	input 								clk,
-	input 								rst_n,
+	input 								reset,
 	input 								mem_re,
 	input 								mem_we,
 	input 	[2:0] 						ls_type,
@@ -63,8 +63,8 @@ wire [1:0] rbyte_sel;
 assign wbyte_sel = wbu2lsu_waddr[1:0];
 assign rbyte_sel = alu2lsu_raddr[1:0];
 
-always@(posedge clk or negedge rst_n) begin
-	if(!rst_n) begin
+always@(posedge clk) begin
+	if(reset) begin
 		mem_state   <= MEM_IDLE;
 		//lsu_ready   <= 1'b1;
 		arvalid  	<= 1'b0;

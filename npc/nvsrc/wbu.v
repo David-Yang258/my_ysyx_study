@@ -1,7 +1,7 @@
 module wbu(
 	`include "bus_define.vh"
 	input 						 clk,
-	input 						 rst_n,
+	input 						 reset,
 	input  [2:0] 				 wb_sel,
 	input 						 branch_taken,
 
@@ -54,8 +54,8 @@ reg [1:0] wbu_state;
 reg [2:0] wb_sel_lock;
 
 
-always@(posedge clk or negedge rst_n)begin
-	if(!rst_n) begin
+always@(posedge clk)begin
+	if(reset) begin
 		wbu_ready <= 1'b1;
 		wbu_state <= WBU_IDLE;
 		jmp_set   <= 1'b0;
