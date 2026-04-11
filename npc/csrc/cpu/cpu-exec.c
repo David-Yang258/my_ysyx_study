@@ -1,19 +1,15 @@
 #include "../../include/cpu/cpu.h"
-#include "Vtop.h" 
-#include "verilated_vcd_c.h"
 #include "../../include/utils.h"
 #include "../../include/debug.h"
 #include "../../include/trace.h"
 #include "../../include/isa/isa-def.h"
 #include "../../include/config.h"
-#include "../../build/obj_dir/Vtop___024root.h"
 #include "../../include/paddr.h"
 
 #define MAX_INST_TO_PRINT 20
 #define NR_GPR 16
 
 
-extern Vtop* top;
 extern VerilatedContext *contextp;
 static word_t old_pc = 0;
 
@@ -35,62 +31,62 @@ void init_diff_cpu(){
 }
 
 static void exec_once(){
-	if(top->clk != 0) top->clk = 0;
-	old_pc = top->pc;
-	//top->inst = pmem_read(top->pc);	
-	//printf("IFU: mem_rcmd = %x\n", top->rootp->top__DOT__ifu_mem_rcmd);
-	//printf("IFU: ifu_state = %x\n", top->rootp->top__DOT__inst_ifu__DOT__ifu_state);
-	//printf("IFU: need2fetch = %x\n", top->rootp->top__DOT__inst_ifu__DOT__need2fetch);
-	//printf("IFU: jmp_set = %x\n", top->rootp->top__DOT__jmp_set);
-	//printf("IFU: ifu_valid = %x\n", top->rootp->top__DOT__ifu_valid);
-	//printf("EXU: jal = %x\n", top->rootp->top__DOT__jal);
-	//printf("LSU: lsu_valid = %x\n", top->rootp->top__DOT__inst_lsu__DOT__o_valid);
+	if(top->clock != 0) top->clock = 0;
+	old_pc = DTOP_PC;
+	//top->inst = pmem_read(DTOP_PC);	
+	//printf("IFU: mem_rcmd = %x\n", top->rootp->ysyx_26030090__DOT__ifu_mem_rcmd);
+	//printf("IFU: ifu_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_ifu__DOT__ifu_state);
+	//printf("IFU: need2fetch = %x\n", top->rootp->ysyx_26030090__DOT__inst_ifu__DOT__need2fetch);
+	//printf("IFU: jmp_set = %x\n", top->rootp->ysyx_26030090__DOT__jmp_set);
+	//printf("IFU: ifu_valid = %x\n", top->rootp->ysyx_26030090__DOT__ifu_valid);
+	//printf("EXU: jal = %x\n", top->rootp->ysyx_26030090__DOT__jal);
+	//printf("LSU: lsu_valid = %x\n", top->rootp->ysyx_26030090__DOT__inst_lsu__DOT__o_valid);
 #ifdef DEBUGING
-	printf("IFU: pc   = %x\n", top->pc);
-	printf("IFU: inst = %x\n", top->inst);
+	printf("IFU: pc   = %x\n", DTOP_PC);
+	printf("IFU: inst = %x\n", DTOP_INST);
 #endif
 #ifdef ITRACE_COND
-	trace_inst2ringbuf(top->pc, top->inst);
+	trace_inst2ringbuf(DTOP_PC, DTOP_INST);
 #endif
 #ifdef FTRACE_COND
-	if(top->inst == 0x00008067)trace_func_ret(top->pc);
+	if(DTOP_INST == 0x00008067)trace_func_ret(DTOP_PC);
 #endif
 	do{
 #ifdef DEBUGING
-		printf("IFU: ifu_state = %x\n", top->rootp->top__DOT__inst_ifu__DOT__ifu_state);
-		printf("MEM: mem_state = %x\n", top->rootp->top__DOT__inst_mem__DOT__mem_state);
-		printf("LSU: lsu_state = %x\n", top->rootp->top__DOT__inst_lsu__DOT__mem_state);
-		printf("MEM: mem_aweady = %x\n", top->rootp->top__DOT__mem_awready);
-		printf("MEM: mem_bvalid = %x\n", top->rootp->top__DOT__mem_bvalid);
-		printf("LSU: lsu_wpcl= %x\n", top->rootp->top__DOT__lsu_wcpl);
-		printf("LSU: lsu_rpcl= %x\n", top->rootp->top__DOT__lsu_rcpl);
+		printf("IFU: ifu_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_ifu__DOT__ifu_state);
+		printf("MEM: mem_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_mem__DOT__mem_state);
+		printf("LSU: lsu_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_lsu__DOT__mem_state);
+		printf("MEM: mem_aweady = %x\n", top->rootp->ysyx_26030090__DOT__mem_awready);
+		printf("MEM: mem_bvalid = %x\n", top->rootp->ysyx_26030090__DOT__mem_bvalid);
+		printf("LSU: lsu_wpcl= %x\n", top->rootp->ysyx_26030090__DOT__lsu_wcpl);
+		printf("LSU: lsu_rpcl= %x\n", top->rootp->ysyx_26030090__DOT__lsu_rcpl);
 
-		printf("MEM: lsu_awaddr = %x\n",top->rootp->top__DOT__lsu_awaddr);
-		printf("LSU: lsu_awvalid = %x\n",top->rootp->top__DOT__lsu_awvalid);
-		//printf("LSU: lsu_awready = %x\n",top->rootp->top__DOT__lsu_awready);
+		printf("MEM: lsu_awaddr = %x\n",top->rootp->ysyx_26030090__DOT__lsu_awaddr);
+		printf("LSU: lsu_awvalid = %x\n",top->rootp->ysyx_26030090__DOT__lsu_awvalid);
+		//printf("LSU: lsu_awready = %x\n",top->rootp->ysyx_26030090__DOT__lsu_awready);
 
-		printf("LSU: lsu_arvalid = %x\n",top->rootp->top__DOT__lsu_arvalid);
-		printf("IFU: ifu_arvalid = %x\n",top->rootp->top__DOT__ifu_arvalid);
-		printf("MEM: lsu_araddr = %x\n",top->rootp->top__DOT__lsu_araddr);
-		printf("MEM: lsu_wdata = %x\n",top->rootp->top__DOT__lsu_wdata);
-		printf("MEM: lsu_rdata = %x\n",top->rootp->top__DOT__mem_rdata);
-		//printf("REG: final_reg_we = %x\n",top->rootp->top__DOT__final_reg_we);
-		//printf("REG: final_rd_wdata = %x\n",top->rootp->top__DOT__final_rd_wdata);
-		printf("WBU: wbu_ready = %x\n", top->rootp->top__DOT__wbu_ready);
+		printf("LSU: lsu_arvalid = %x\n",top->rootp->ysyx_26030090__DOT__lsu_arvalid);
+		printf("IFU: ifu_arvalid = %x\n",top->rootp->ysyx_26030090__DOT__ifu_arvalid);
+		printf("MEM: lsu_araddr = %x\n",top->rootp->ysyx_26030090__DOT__lsu_araddr);
+		printf("MEM: lsu_wdata = %x\n",top->rootp->ysyx_26030090__DOT__lsu_wdata);
+		printf("MEM: lsu_rdata = %x\n",top->rootp->ysyx_26030090__DOT__mem_rdata);
+		//printf("REG: final_reg_we = %x\n",top->rootp->ysyx_26030090__DOT__final_reg_we);
+		//printf("REG: final_rd_wdata = %x\n",top->rootp->ysyx_26030090__DOT__final_rd_wdata);
+		printf("WBU: wbu_ready = %x\n", top->rootp->ysyx_26030090__DOT__wbu_ready);
 		printf("\n");
 #endif
-		top->clk = !top->clk;
+		top->clock = !top->clock;
 		top->eval();
-		top->clk = !top->clk;
+		top->clock = !top->clock;
 		top->eval();
-	}while(top->o_ifu_state != 3);
+	}while(DTOP_IFU_STATE != 3);
 	//top->eval();
-	//top->clk = !top->clk;
+	//top->clock = !top->clock;
 	//top->eval();
-	//top->clk = !top->clk;
-	cpu.pc = top->pc;
+	//top->clock = !top->clock;
+	cpu.pc = DTOP_PC;
 	for(int i = 0;i < NR_GPR;i++){
-		cpu.gpr[i] = top->rootp->top__DOT__inst_gpr__DOT__rf[i];
+		cpu.gpr[i] = DTOP_RF[i];
 	}
 	if(ReEvalWPs()) npc_state.state = NPC_STOP;
 }

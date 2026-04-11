@@ -32,5 +32,5 @@ image: image-dep
 run: insert-arg
 	@echo "TODO: add command here to run simulation"
 	#$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim IMG=$(IMAGE).bin
-	@$(NPC_HOME)/build/top --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) -b
+	@$(NPC_HOME)/build/ysyx_26030090 --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) #-b
 .PHONY: insert-arg

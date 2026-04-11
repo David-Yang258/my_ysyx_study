@@ -5,13 +5,12 @@
 #include <string.h>
 #include "../../include/memory.h"
 #include "../../include/trace.h"
-#include "Vtop.h"
+#include "../../include/cpu/cpu.h"
 
 
 #define MAX_LINE_LEN 256
 
 uint32_t *memory = NULL;
-extern Vtop*top;
 
 long long get_us();
 void pmem_read_display(paddr_t, int);
@@ -94,7 +93,7 @@ extern "C" int pmem_read(int raddr){
 	uint32_t word_addr = aligned_addr / 4;
 	//printf("addr %x read: %x\n",word_addr, memory[word_addr]);
 #ifdef MTRACE_COND
-	if(raddr != top->pc) pmem_read_display(raddr, memory[word_addr]);
+	if(raddr != top->rootp->ysyx_26030090__DOT__pc) pmem_read_display(raddr, memory[word_addr]);
 #endif
 	return (int)memory[word_addr];
 

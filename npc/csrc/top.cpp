@@ -4,14 +4,14 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include "Vtop.h"
 
 #include "../include/memory.h"
 #include "sdb/sdb.h"
 
-#include "../build/obj_dir/Vtop___024root.h"
 #include "../include/utils.h"
 #include "../include/debug.h"
+
+#include "top.h"
 
 #define MAX_LINE_LEN 256
 #define MEMORY_SIZE (-1)
@@ -27,39 +27,42 @@ char *diff_so_file = NULL;
 
 VerilatedContext *contextp = NULL;
 
-Vtop *top = NULL;
+VysyxSoCFull *top = NULL;
 
 
 extern "C" void ebreak(){
 	npc_state.state = NPC_END;
-	npc_state.halt_pc = top->pc;
-	npc_state.halt_ret = top->rootp->top__DOT__inst_gpr__DOT__rf[10];
+	npc_state.halt_pc = DTOP_PC;
+	npc_state.halt_ret = DTOP_RF[10];
 	ebreak_stop = 1;
 }
 extern "C" void assert_abort(){
 	printf("Assert failed!\n");
 	npc_state.state = NPC_ABORT;
-	npc_state.halt_pc = top->pc;
-	npc_state.halt_ret = top->rootp->top__DOT__inst_gpr__DOT__rf[10];
+	npc_state.halt_pc = DTOP_PC;
+	npc_state.halt_ret = DTOP_RF[10];
 }
 extern "C" void ecall(){
 	printf("ECALL!\n");
-	printf("npc mcause: %x\n", top->rootp->top__DOT__inst_csr__DOT__mcause);
-	printf("npc mtvec: %x\n", top->rootp->top__DOT__inst_csr__DOT__mtvec);
-	printf("npc mepc: %x\n", top->rootp->top__DOT__inst_csr__DOT__mepc);
+	printf("npc mcause: %x\n", DTOP_MCAUSE);
+	printf("npc mtvec: %x\n", DTOP_MTVEC);
+	printf("npc mepc: %x\n", DTOP_MEPC);
 }
 
-extern "C" void uart_printf(int wdata, int clk){
+extern "C" void uart_printf(int wdata, int clock){
 	int wdata1 = wdata;
 	int char2put = wdata1 & 0xFF; 
 	putchar(char2put);
 }
 
+extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
+
 int parse_hex_line(const char *filename, uint32_t *memory, size_t mem_size);
 uint32_t pmem_init(const char* filename, uint32_t size_bytes, uint32_t** memory, size_t*mem_words);
 
 extern "C" int pmem_read(int raddr);
-extern "C" void pmem_write(int waddr, int wdata, char wmask, int clk);
+extern "C" void pmem_write(int waddr, int wdata, char wmask, int clock);
 
 long long get_us();
 
@@ -70,9 +73,10 @@ void interpret_elf(const char*);
 
 
 int main(int argc, char* argv[]){
+	Verilated::commandArgs(argc, argv);
 	contextp = new VerilatedContext;
 	contextp->commandArgs(argc, argv);
-	top = new Vtop{contextp};
+	top = new TOP_TYPE{contextp};
 
 	for(int i = 1;i < argc; i++){
 		if(strcmp(argv[i], "--img") == 0 && i+1 < argc){
@@ -102,25 +106,33 @@ int main(int argc, char* argv[]){
 
 	pmem_init(mem_file,MEMORY_SIZE,&memory, &mem_words);
 
-	top->clk  = 0;
-	top->rst_n= 1;
+	top->clock= 0;
+	top->reset= 1;
 	top->eval();
-	top->rst_n=0;
-	top->eval();
-	top->rst_n=1;
-	top->eval();
-	printf("pc = %x\n", top->pc);
 
-	while(top->o_ifu_state != 3){
-		top->clk = 1;
+	top->clock= 1;
+	top->eval();
+
+	top->clock= 0;
+	top->reset=0;
+	top->eval();
+
+	printf("pc = %x\n", DTOP_PC);
+
+	while(DTOP_IFU_STATE != 3){
+		printf("n2f: need2fetch = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_ifu__DOT__need2fetch);
+		top->clock = 1;
 		top->eval();
-		top->clk = 0;
+		printf("clk: %d\n",top->clock);
+		top->clock = 0;
 		top->eval();
+		printf("clk: %d\n",top->clock);
+		printf("rst: %d\n",top->reset);
+#define DEBUGING
 #ifdef DEBUGING
-		printf("IFU: arready = %x\n", top->rootp->top__DOT__mem_arready);
-		printf("arb: arready = %x\n", top->rootp->top__DOT__inst_arbiter__DOT__arb_arready);
-		printf("xbar:mem_r_active = %x\n", top->rootp->top__DOT__inst_xbar__DOT__mem_r_active);
-		printf("MEM: mem_arvalid = %x\n", top->rootp->top__DOT__inst_mem__DOT__arvalid);
+		printf("IFU: ifu_state = %x\n", DTOP_IFU_STATE);
+		printf("n2f: need2fetch = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_ifu__DOT__need2fetch);
+		printf("OLED: oled = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__oled);
 #endif
 	}
 

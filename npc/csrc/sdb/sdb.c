@@ -201,7 +201,7 @@ void init_sdb(){
 	bin_img_size = load_img();
 	init_mem();
 	init_diff_cpu();
-	init_difftest(diff_so_file, bin_img_size, difftest_port);
+	//init_difftest(diff_so_file, bin_img_size, difftest_port);
 }
 
 

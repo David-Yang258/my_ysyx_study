@@ -1,9 +1,10 @@
 `include "bus_define.vh"
 module ysyx_26030090(
 	//clock
-	input clock,
-	input reset,
-	input io_intertupt,
+	input 				clock,
+	input 				reset,
+	/*verilator lint_off UNUSEDSIGNAL*/
+	input 				io_interrupt,
 	input             	io_master_awready,
 	output           	io_slave_awready ,
     output            	io_master_awvalid,
@@ -62,6 +63,7 @@ module ysyx_26030090(
 	output           	io_slave_rlast   ,
     input   [3:0]   	io_master_rid    ,
 	output 	[3:0]   	io_slave_rid     
+	/*verilator lint_on UNUSEDSIGNAL*/
 
 	//output [`BUS_DATA_WIDTH-1:0] pc,
 	//output [`BUS_DATA_WIDTH-1:0] inst,
@@ -69,11 +71,18 @@ module ysyx_26030090(
 	//output bus_error,
 	//output Ebreak
 );
-
+/*verilator lint_off UNUSEDSIGNAL*/
+wire ifu_bus_error;
+wire idu_bus_error;
+wire exu_bus_error;
+wire lsu_bus_error;
+wire wbu_bus_error;
+wire Ebreak;
+/*verilator lint_on UNUSEDSIGNAL*/
+wire [`BUS_DATA_WIDTH-1:0]  pc;
 wire 						jmp_set;
 wire 						stall;
 wire 						ifu_valid;
-wire 						ifu_bus_error;
 wire [`BUS_DATA_WIDTH-1:0]  jmp_addr;
 
 wire [`BUS_DATA_WIDTH-1:0]  instruction;
@@ -91,7 +100,6 @@ wire branch;
 wire jal;
 wire jalr;
 wire auipc;
-wire idu_bus_error;
 wire [1:0] alu_src2_sel;
 wire [2:0] ls_type;
 wire [2:0] wb_sel;
@@ -107,7 +115,6 @@ wire [`CSR_ADDR_WIDTH-1:0] csr_waddr2;
 
 wire exu_branch_taken;
 wire exu_valid;
-wire exu_bus_error;
 wire [`BUS_DATA_WIDTH-1:0] rs1_src;
 wire [`BUS_DATA_WIDTH-1:0] rs2_src;
 wire [`BUS_DATA_WIDTH-1:0] csr_src;
@@ -123,7 +130,6 @@ wire 						lsu_mem_re;
 wire 						lsu_wcpl;
 wire 						lsu_rcpl;
 //wire 						lsu_valid;
-wire 						lsu_bus_error;
 //wire [`BUS_DATA_WIDTH-1:0] 	alu2lsu_addr;
 //wire [`BUS_DATA_WIDTH-1:0] 	alu2lsu_wdata;
 //wire [`BUS_DATA_WIDTH-1:0] 	alu2lsu_rdata;
@@ -134,7 +140,6 @@ wire final_mem_we;
 wire final_reg_we;
 wire final_csr_we1;
 wire final_csr_we2;
-wire wbu_bus_error;
 wire [`REG_ADDR_WIDTH-1:0] final_rd_waddr;
 wire [`CSR_ADDR_WIDTH-1:0] final_csr_waddr1;
 wire [`CSR_ADDR_WIDTH-1:0] final_csr_waddr2;
@@ -147,10 +152,8 @@ wire wbu_ready;
 
 
 assign stall = 1'b0;
-assign bus_error = ifu_bus_error | idu_bus_error | exu_bus_error | lsu_bus_error | wbu_bus_error;
 
 assign lsu_mem_re 	 = idu_mem_re;
-assign inst = instruction;
 
 wire ifu_arvalid;
 wire [`MEM_ADDR_WIDTH-1:0] ifu_araddr;
@@ -179,7 +182,9 @@ assign ifu_wready  = 1'b0;
 assign ifu_bresp   = 2'b00;
 assign ifu_bvalid  = 1'b0;
 
-ifu inst_ifu(
+wire oled;
+
+ifu ysyx_26030090_ifu(
 	.clk 			(clock),
 	.reset  		(reset),
 	.branch_happen  (jmp_set),
@@ -212,11 +217,11 @@ ifu inst_ifu(
 	.inst 			(instruction),
 	.i_ready 		(idu_ready),
 	.o_valid 		(ifu_valid),
-	.bus_error 		(ifu_bus_error),
-	.o_ifu_state 	(o_ifu_state)
+	.clked 			(oled),
+	.bus_error 		(ifu_bus_error)
 );
 
-idu inst_idu(
+idu ysyx_26030090_idu(
 	.inst 			(instruction),
 	.imm 			(idu_imm),
 	.rd 			(rd_addr),
@@ -249,7 +254,7 @@ idu inst_idu(
 	.bus_error   	(idu_bus_error)
 );
 
-exu inst_exu(
+exu ysyx_26030090_exu(
 	.imm 			(idu_imm),
 	.rs1_src 		(rs1_src),
 	.rs2_src 		(rs2_src),
@@ -300,7 +305,7 @@ wire [1:0] lsu_bresp;
 wire lsu_bvalid;
 wire lsu_bready;
 
-lsu inst_lsu(
+lsu ysyx_26030090_lsu(
 	.clk 			(clock),
 	.reset 			(reset),
 	.mem_re 		(lsu_mem_re),
@@ -343,7 +348,7 @@ lsu inst_lsu(
 	.bus_error 		(lsu_bus_error)
 );
 
-wbu inst_wbu(
+wbu ysyx_26030090_wbu(
 	.clk 			(clock),
 	.reset 			(reset),
 	.wb_sel 		(wb_sel),
@@ -380,7 +385,7 @@ wbu inst_wbu(
 	.final_reg_we 	(final_reg_we)
 );
 
-gpr inst_gpr(
+gpr ysyx_26030090_gpr(
 	.clk 			(clock),
 	.wdata 			(final_rd_wdata),
 	.waddr 			(final_rd_waddr),
@@ -391,7 +396,7 @@ gpr inst_gpr(
 	.rdata2 		(rs2_src)
 );
 
-csr inst_csr(
+csr ysyx_26030090_csr(
 	.clk 			(clock),
 	.csr_wen1 		(final_csr_we1),
 	.csr_wen2		(final_csr_we2),
@@ -425,7 +430,7 @@ wire [1:0] arb_bresp;
 wire arb_bvalid;
 wire arb_bready;
 
-arbiter_mem inst_arbiter(
+arbiter_mem ysyx_26030090_arbiter(
 	.aclk 			(clock),
 	.reset 		(reset),
 
@@ -497,7 +502,78 @@ arbiter_mem inst_arbiter(
 	.arb_bvalid 	(arb_bvalid),
 	.arb_bready 	(arb_bready)
 );
+//ASI
+assign io_slave_rid = 0;
+assign io_slave_rlast = 0;
+assign io_slave_rdata = 0;
+assign io_slave_rresp = 0;
+assign io_slave_rvalid = 0;
+assign io_slave_arready = 0;
+assign io_slave_bid = 0;
+assign io_slave_bresp = 0;
+assign io_slave_bvalid = 0;
+assign io_slave_wready = 0;
+assign io_slave_awready = 0;
 
+lite2full_bridge ysyx_26030090_bridge(
+	.l_awvalid 		(arb_awvalid),
+	.l_awready		(arb_awready),
+	.l_awaddr		(arb_awaddr),
+	   
+	.l_wvalid		(arb_wvalid),
+	.l_wready		(arb_wready),
+	.l_wdata		(arb_wdata),
+	.l_wstrb		(arb_wstrb),
+	   
+	.l_bvalid		(arb_bvalid),
+	.l_bready		(arb_bready),
+	.l_bresp		(arb_bresp),
+	   
+	.l_arvalid		(arb_arvalid),
+	.l_arready		(arb_arready),
+	.l_araddr		(arb_araddr),
+	   
+	.l_rvalid		(arb_rvalid),
+	.l_rready		(arb_rready),
+	.l_rdata		(arb_rdata),
+	.l_rresp		(arb_rresp),
+	   
+	.f_awvalid		(io_master_awvalid),
+	.f_awready		(io_master_awready),
+	.f_awaddr		(io_master_awaddr),
+	.f_awlen		(io_master_awlen),
+	.f_awsize		(io_master_awsize),
+	.f_awburst		(io_master_awburst),
+	.f_awid			(io_master_awid),
+	   
+	.f_wvalid		(io_master_wvalid),
+	.f_wready		(io_master_wready),
+	.f_wdata		(io_master_wdata),
+	.f_wstrb		(io_master_wstrb),
+	.f_wlast		(io_master_wlast),
+	   
+	.f_bvalid		(io_master_bvalid),
+	.f_bready		(io_master_bready),
+	.f_bresp		(io_master_bresp),
+	.f_bid			(io_master_bid),
+	   
+	.f_arvalid		(io_master_arvalid),
+	.f_arready		(io_master_arready),
+	.f_araddr		(io_master_araddr),
+	.f_arlen		(io_master_arlen),
+	.f_arsize		(io_master_arsize),
+	.f_arburst		(io_master_arburst),
+	.f_arid			(io_master_arid),
+	   
+	.f_rvalid		(io_master_rvalid),
+	.f_rready		(io_master_rready),
+	.f_rdata		(io_master_rdata),
+	.f_rresp		(io_master_rresp),
+	.f_rlast		(io_master_rlast), 
+	.f_rid			(io_master_rid)
+);
+
+	/*----------------------------------------------------------------------
 wire mem_arvalid;
 wire [`MEM_ADDR_WIDTH-1:0] mem_araddr;
 wire mem_arready;
@@ -541,8 +617,9 @@ wire uart_wready;
 wire [1:0] uart_bresp;
 wire uart_bvalid;
 wire uart_bready;
-
-xbar inst_xbar(
+-----------------------------------------------------------------------*/
+/*-------------------------------------------------------
+xbar ysyx_26030090_xbar(
 	.aclk            	(clock),
 	.reset          	(reset),
 
@@ -612,8 +689,9 @@ xbar inst_xbar(
 	.uart_bvalid         (uart_bvalid),
 	.uart_bready         (uart_bready)
 );
-
-uart_axi inst_uart(
+--------------------------------------*/
+/*------------------------------------------
+uart_axi ysyx_26030090_uart(
 	.aclk 			(clock),
 	.reset 		(reset),
 
@@ -639,8 +717,9 @@ uart_axi inst_uart(
 	.bvalid 		(uart_bvalid),
 	.bready 		(uart_bready)
 );
-
-mem inst_mem(
+-------------------------------------------*/
+/*-----------------------------------------
+mem ysyx_26030090_mem(
 	.clk 			(clock),
 	.reset 			(reset),
 
@@ -666,4 +745,5 @@ mem inst_mem(
 	.bvalid 		(mem_bvalid),
 	.bready 		(mem_bready)
 );
+-----------------------------------------*/
 endmodule

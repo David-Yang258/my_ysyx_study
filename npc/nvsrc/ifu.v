@@ -44,7 +44,7 @@ module ifu(
 
 	output reg 	[`BUS_DATA_WIDTH-1:0] pc,
 	output reg 	[`BUS_DATA_WIDTH-1:0] inst,
-	output      [2:0] 				  o_ifu_state,
+	output reg 						  clked,
 	output reg						  bus_error
 );
 reg [2:0]  				  ifu_state; 		 //IFU state
@@ -59,7 +59,6 @@ localparam IFU_WAIT_WBU 	= 3'b011;//Waiting for WBU to write
 localparam IFU_WRITE_BACK 	= 3'b100;//Waiting for WBU to write
 localparam IFU_JMP			= 3'b101;//Handle branch if there is one 
 
-assign o_ifu_state = ifu_state;
 assign awvalid = 1'b0;
 assign wvalid  = 1'b0; 
 assign bready  = 1'b0;
@@ -68,6 +67,7 @@ assign wdata   = 32'b0;
 assign wstrb   = 4'b0;
 
 always@(posedge clk) begin
+	clked <= !clked;
 	if(reset) begin 
 		pc        <= `PC_ENTRY; 	//ENTRY:0x80000000
 		araddr    <= `PC_ENTRY;
