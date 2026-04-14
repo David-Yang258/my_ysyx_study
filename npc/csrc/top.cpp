@@ -56,7 +56,11 @@ extern "C" void uart_printf(int wdata, int clock){
 }
 
 extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
-extern "C" void mrom_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void mrom_read(int32_t addr, int32_t *data) {
+	*data = pmem_read(addr);
+	//printf("addr = %x\n", addr);
+	//printf("data_addr = %p\n",data);	
+}
 
 int parse_hex_line(const char *filename, uint32_t *memory, size_t mem_size);
 uint32_t pmem_init(const char* filename, uint32_t size_bytes, uint32_t** memory, size_t*mem_words);
@@ -120,7 +124,6 @@ int main(int argc, char* argv[]){
 	printf("pc = %x\n", DTOP_PC);
 
 	while(DTOP_IFU_STATE != 3){
-		printf("n2f: need2fetch = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_ifu__DOT__need2fetch);
 		top->clock = 1;
 		top->eval();
 		printf("clk: %d\n",top->clock);
@@ -128,11 +131,12 @@ int main(int argc, char* argv[]){
 		top->eval();
 		printf("clk: %d\n",top->clock);
 		printf("rst: %d\n",top->reset);
-#define DEBUGING
 #ifdef DEBUGING
 		printf("IFU: ifu_state = %x\n", DTOP_IFU_STATE);
-		printf("n2f: need2fetch = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_ifu__DOT__need2fetch);
-		printf("OLED: oled = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__oled);
+		printf("LSU: lsu_state = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_lsu__DOT__mem_state);
+		printf("LSU: lsu_arvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_arvalid);
+        printf("IFU: ifu_arvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ifu_arvalid);
+		printf("IFU: ifu_rvalid = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_rvalid);
 #endif
 	}
 

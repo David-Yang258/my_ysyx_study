@@ -41,6 +41,7 @@ static void exec_once(){
 	//printf("IFU: ifu_valid = %x\n", top->rootp->ysyx_26030090__DOT__ifu_valid);
 	//printf("EXU: jal = %x\n", top->rootp->ysyx_26030090__DOT__jal);
 	//printf("LSU: lsu_valid = %x\n", top->rootp->ysyx_26030090__DOT__inst_lsu__DOT__o_valid);
+//#define DEBUGING
 #ifdef DEBUGING
 	printf("IFU: pc   = %x\n", DTOP_PC);
 	printf("IFU: inst = %x\n", DTOP_INST);
@@ -53,26 +54,17 @@ static void exec_once(){
 #endif
 	do{
 #ifdef DEBUGING
-		printf("IFU: ifu_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_ifu__DOT__ifu_state);
-		printf("MEM: mem_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_mem__DOT__mem_state);
-		printf("LSU: lsu_state = %x\n", top->rootp->ysyx_26030090__DOT__inst_lsu__DOT__mem_state);
-		printf("MEM: mem_aweady = %x\n", top->rootp->ysyx_26030090__DOT__mem_awready);
-		printf("MEM: mem_bvalid = %x\n", top->rootp->ysyx_26030090__DOT__mem_bvalid);
-		printf("LSU: lsu_wpcl= %x\n", top->rootp->ysyx_26030090__DOT__lsu_wcpl);
-		printf("LSU: lsu_rpcl= %x\n", top->rootp->ysyx_26030090__DOT__lsu_rcpl);
-
-		printf("MEM: lsu_awaddr = %x\n",top->rootp->ysyx_26030090__DOT__lsu_awaddr);
-		printf("LSU: lsu_awvalid = %x\n",top->rootp->ysyx_26030090__DOT__lsu_awvalid);
-		//printf("LSU: lsu_awready = %x\n",top->rootp->ysyx_26030090__DOT__lsu_awready);
-
-		printf("LSU: lsu_arvalid = %x\n",top->rootp->ysyx_26030090__DOT__lsu_arvalid);
-		printf("IFU: ifu_arvalid = %x\n",top->rootp->ysyx_26030090__DOT__ifu_arvalid);
-		printf("MEM: lsu_araddr = %x\n",top->rootp->ysyx_26030090__DOT__lsu_araddr);
-		printf("MEM: lsu_wdata = %x\n",top->rootp->ysyx_26030090__DOT__lsu_wdata);
-		printf("MEM: lsu_rdata = %x\n",top->rootp->ysyx_26030090__DOT__mem_rdata);
-		//printf("REG: final_reg_we = %x\n",top->rootp->ysyx_26030090__DOT__final_reg_we);
-		//printf("REG: final_rd_wdata = %x\n",top->rootp->ysyx_26030090__DOT__final_rd_wdata);
-		printf("WBU: wbu_ready = %x\n", top->rootp->ysyx_26030090__DOT__wbu_ready);
+		printf("IFU: ifu_state = %x\n", DTOP_IFU_STATE);
+		printf("LSU: lsu_state = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_lsu__DOT__mem_state);
+		printf("LSU: lsu_arvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_arvalid);
+		printf("IFU: ifu_rvalid = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_rvalid);
+		printf("LSU: lsu_awvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_awvalid);
+		printf("LSU: lsu_wstrb = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_wstrb);
+		printf("LSU: lsu_wvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_wvalid);
+		printf("LSU: lsu_wdata = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_wdata);
+		printf("LSU: lsu_bready = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_bready);
+		printf("LSU: lsu_mem_state = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_lsu__DOT__mem_state);
+		printf("LSU: lsu_bvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_bvalid);
 		printf("\n");
 #endif
 		top->clock = !top->clock;

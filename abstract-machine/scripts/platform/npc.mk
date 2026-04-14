@@ -20,9 +20,9 @@ CFLAGS += -DMAINARGS_MAX_LEN=$(MAINARGS_MAX_LEN) -DMAINARGS_PLACEHOLDER=$(MAINAR
 DIFF_SO_FILE = /home/daviyang3182/ysyx/ysyx-workbench/npc/tools/nemu-diff/riscv32-nemu-interpreter-so
 
 insert-arg: image
-	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
+	#@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
 	@hexdump -v -e '8/4 "%08x " "\n"' $(IMAGE).bin | \
-		    awk '{printf "%05x: %s\n", (NR-1)*8 + 0x20000000, $$0}' > $(IMAGE).hex 
+		    awk '{printf "%05x: %s\n", (NR-1)*8 + 0x08000000, $$0}' > $(IMAGE).hex 
 
 image: image-dep
 	@$(OBJDUMP) -d $(IMAGE).elf > $(IMAGE).txt
@@ -32,5 +32,5 @@ image: image-dep
 run: insert-arg
 	@echo "TODO: add command here to run simulation"
 	#$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim IMG=$(IMAGE).bin
-	@$(NPC_HOME)/build/ysyx_26030090 --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) #-b
+	@$(NPC_HOME)/build/ysyxSoCFull --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) #-b
 .PHONY: insert-arg

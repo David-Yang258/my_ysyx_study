@@ -432,7 +432,7 @@ wire arb_bready;
 
 arbiter_mem ysyx_26030090_arbiter(
 	.aclk 			(clock),
-	.reset 		(reset),
+	.reset 			(reset),
 
 	.ifu_arvalid 	(ifu_arvalid),
 	.ifu_araddr 	(ifu_araddr),

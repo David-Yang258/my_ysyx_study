@@ -147,8 +147,10 @@ assign lsu_rdata   = arb_rdata;
 assign ifu_rresp   = arb_rresp;
 assign lsu_rresp   = arb_rresp;
 
-assign ifu_rvalid  = ifu_r_grant & arb_rvalid;
-assign lsu_rvalid  = lsu_r_grant & arb_rvalid;
+//assign ifu_rvalid  = ifu_r_grant & arb_rvalid;
+//assign lsu_rvalid  = lsu_r_grant & arb_rvalid;
+assign ifu_rvalid  = arb_rvalid;
+assign lsu_rvalid  = arb_rvalid;
 
 assign arb_rready  = ifu_r_grant ? ifu_rready  : (lsu_r_grant ? lsu_rready  : 1'b0);
 

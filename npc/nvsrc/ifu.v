@@ -69,8 +69,8 @@ assign wstrb   = 4'b0;
 always@(posedge clk) begin
 	clked <= !clked;
 	if(reset) begin 
-		pc        <= `PC_ENTRY; 	//ENTRY:0x80000000
-		araddr    <= `PC_ENTRY;
+		pc        <= `SOC_ENTRY; 	//ENTRY:0x80000000;SoC:0x20000000;
+		araddr    <= `SOC_ENTRY;
 		ifu_state <= IFU_IDLE; 		//IDLE
 		inst 	  <= 32'h00000013;  //NOP
 		arvalid   <= `MEM_CMD_IDLE; //IDLE cmd to mem
@@ -96,8 +96,8 @@ always@(posedge clk) begin
 			end
 			IFU_REQ: begin
 				if(arready) begin 
-					arvalid   <= `MEM_CMD_IDLE;
 					ifu_state <= IFU_GET_INST;
+					arvalid   <= `MEM_CMD_IDLE;
 				end
 			end
 			IFU_GET_INST: begin
