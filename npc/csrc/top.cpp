@@ -1,4 +1,4 @@
-#include "verilated.h"
+#include <verilated.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -12,6 +12,9 @@
 #include "../include/debug.h"
 
 #include "top.h"
+
+#include "verilated_vcd_c.h"
+#include "VysyxSoCFull.h"
 
 #define MAX_LINE_LEN 256
 #define MEMORY_SIZE (-1)
@@ -28,6 +31,8 @@ char *diff_so_file = NULL;
 VerilatedContext *contextp = NULL;
 
 VysyxSoCFull *top = NULL;
+
+VerilatedVcdC *tfp = NULL;
 
 
 extern "C" void ebreak(){
@@ -81,6 +86,11 @@ int main(int argc, char* argv[]){
 	contextp = new VerilatedContext;
 	contextp->commandArgs(argc, argv);
 	top = new TOP_TYPE{contextp};
+
+	tfp = new VerilatedVcdC;
+	contextp->traceEverOn(true);
+	top->trace(tfp,0);
+	tfp->open("wave.vcd");
 
 	for(int i = 1;i < argc; i++){
 		if(strcmp(argv[i], "--img") == 0 && i+1 < argc){
@@ -147,6 +157,7 @@ int main(int argc, char* argv[]){
 			printf("Simulation stop due to ebreak\n");
 		}
 	top->final();
+	tfp->close();
 	delete top;
 	delete contextp;
 	if(npc_state.state != NPC_END || (npc_state.state == NPC_END && npc_state.halt_ret != 0)) return -1;

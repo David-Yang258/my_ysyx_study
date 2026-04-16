@@ -6,11 +6,14 @@
 #include "../../include/config.h"
 #include "../../include/paddr.h"
 
+#include "verilated_vcd_c.h"
+
 #define MAX_INST_TO_PRINT 20
 #define NR_GPR 16
 
 
 extern VerilatedContext *contextp;
+extern VerilatedVcdC *tfp;
 static word_t old_pc = 0;
 
 extern "C" int pmem_read(int);
@@ -56,26 +59,40 @@ static void exec_once(){
 #ifdef DEBUGING
 		printf("IFU: ifu_state = %x\n", DTOP_IFU_STATE);
 		printf("LSU: lsu_state = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_lsu__DOT__mem_state);
-		printf("LSU: lsu_arvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_arvalid);
+		printf("LSU: lsu_arvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_arvalid);
 		printf("IFU: ifu_rvalid = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_rvalid);
-		printf("LSU: lsu_awvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_awvalid);
+		printf("LSU: lsu_rdata = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_mem_rdata);
+		printf("AXI: rlast = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__axi4xbar_1__DOT__auto_anon_in_rlast);
+		printf("LSU: lsu_r_active = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_arbiter__DOT__lsu_r_active);
+		printf("LSU: lsu_w_active = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_arbiter__DOT__lsu_w_active);
+		printf("LSU: lsu_awvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_awvalid);
+		printf("LSU: lsu_wvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_wvalid);
+		printf("LSU: lsu_awaddr = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_awaddr);
 		printf("LSU: lsu_wstrb = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_wstrb);
-		printf("LSU: lsu_wvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_wvalid);
 		printf("LSU: lsu_wdata = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_wdata);
 		printf("LSU: lsu_bready = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__lsu_bready);
 		printf("LSU: lsu_mem_state = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_lsu__DOT__mem_state);
 		printf("LSU: lsu_bvalid = %x\n",top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_bridge__DOT__l_bvalid);
+		printf("AXI: bresp1 = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__axi4xbar_1__DOT__auto_anon_in_bresp);
 		printf("\n");
 #endif
+
 		top->clock = !top->clock;
 		top->eval();
+
+#ifdef wave
+		tfp->dump(contextp->time());
+		contextp->timeInc(1);
+#endif
+
 		top->clock = !top->clock;
 		top->eval();
+
+#ifdef wave
+		tfp->dump(contextp->time());
+		contextp->timeInc(1);
+#endif
 	}while(DTOP_IFU_STATE != 3);
-	//top->eval();
-	//top->clock = !top->clock;
-	//top->eval();
-	//top->clock = !top->clock;
 	cpu.pc = DTOP_PC;
 	for(int i = 0;i < NR_GPR;i++){
 		cpu.gpr[i] = DTOP_RF[i];

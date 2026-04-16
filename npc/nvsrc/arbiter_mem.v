@@ -87,13 +87,13 @@ wire lsu_w_start;
 wire lsu_w_done;
 
 //1.Work start & done
-assign ifu_r_start = ifu_arvalid & ifu_rready;
+assign ifu_r_start = ifu_arvalid;
 assign ifu_r_done  = arb_rvalid;
 
-assign lsu_r_start = lsu_arvalid & lsu_rready;
+assign lsu_r_start = lsu_arvalid;
 assign lsu_r_done  = arb_rvalid;
 
-assign lsu_w_start = lsu_awvalid & lsu_wvalid;
+assign lsu_w_start = lsu_awvalid;
 assign lsu_w_done  = arb_bvalid;
 
 //2.Work active
@@ -119,9 +119,9 @@ always@(posedge aclk) begin
 			if(!ifu_r_active & !lsu_r_active) lsu_w_active <= 1'b1;
 		end
 
-		if(ifu_r_active & ifu_r_done) ifu_r_active <= 1'b0;
-		if(lsu_r_active & lsu_r_done) lsu_r_active <= 1'b0;
-		if(lsu_w_active & lsu_w_done) lsu_w_active <= 1'b0;
+		else if(ifu_r_active & ifu_r_done) ifu_r_active <= 1'b0;
+		else if(lsu_r_active & lsu_r_done) lsu_r_active <= 1'b0;
+		else if(lsu_w_active & lsu_w_done) lsu_w_active <= 1'b0;
 	end
 end
 

@@ -10,7 +10,7 @@ AM_SRCS := riscv/soc/start.S \
 
 CFLAGS    += -fdata-sections -ffunction-sections
 LDSCRIPTS += $(AM_HOME)/scripts/linker.ld
-LDFLAGS   += --defsym=_pmem_start=0x0f000000 --defsym=_entry_offset=0x0
+LDFLAGS   += --defsym=_pmem_start=0x20000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000
 LDFLAGS   += --gc-sections -e _start
 
 MAINARGS_MAX_LEN = 64
@@ -32,5 +32,5 @@ image: image-dep
 run: insert-arg
 	@echo "TODO: add command here to run simulation"
 	#@$(MAKE) -C $(NPC_HOME) ISA=$(ISA) sim IMG=$(IMAGE).bin
-	@$(NPC_HOME)/build/ysyxSoCFull --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) #-b
+	@$(NPC_HOME)/build/ysyxSoCFull --img $(IMAGE).hex -e $(IMAGE).elf -d $(DIFF_SO_FILE) -b
 .PHONY: insert-arg

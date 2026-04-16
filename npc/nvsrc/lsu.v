@@ -86,7 +86,7 @@ always@(posedge clk) begin
 					mem_rd_state<= MEM_RE;
 					araddr   	<= alu2lsu_raddr;
 					arvalid  	<= 1'b1;	
-					rready   	<= 1'b1;
+					rready    	<= 1'b1;
 					mem_state   <= MEM_WAIT_AR;
 					//lsu_ready   <= 1'b0;
 					//wait4mem 	<= 1'b1;
@@ -99,7 +99,6 @@ always@(posedge clk) begin
 					awaddr   	<= wbu2lsu_waddr;
 					wdata   	<= wbu2lsu_wdata;
 					awvalid 	<= 1'b1;
-					wvalid  	<= 1'b1;
 					case(ls_type)
 						`LS_TYPE_B: begin
 							case(wbyte_sel)
@@ -132,10 +131,15 @@ always@(posedge clk) begin
 				end
 			end
 			MEM_WAIT_AR: begin
-				if((arready || awready) && !stall) begin 
+				if((arready) && !stall) begin 
 					arvalid   <= 1'b0;
-					awvalid   <= 1'b0;
-					mem_state <= MEM_WAIT_DR;
+					rready    <= 1'b0;
+					mem_state <= MEM_HANDLE;
+				end
+				if(awready && !stall) begin
+					awvalid    <= 1'b0;
+					wvalid     <= 1'b1;
+					mem_state  <= MEM_WAIT_DR;
 				end
 			end
 			MEM_WAIT_DR: begin

@@ -102,8 +102,8 @@ always@(posedge clk) begin
 			end
 			IFU_GET_INST: begin
 				if(rvalid)begin
-					inst 	  <= rdata;
 					rready    <= 1'b0;
+					inst 	  <= rdata;
 					o_valid   <= 1'b1;
 					ifu_state <= IFU_WAIT_WBU;
 				end
