@@ -7,7 +7,7 @@ extern uint32_t mem_words;
 
 void init_mem(){
 #if defined (CONFIG_PMEM_MALLOC)
-	pmem = (uint8_t*)memory + 0x80000000;
+	pmem = (uint8_t*)memory + CONFIG_MBASE;
 	assert(pmem);
 #endif
 }

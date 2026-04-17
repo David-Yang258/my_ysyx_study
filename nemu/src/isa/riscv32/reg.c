@@ -25,11 +25,20 @@ const char *regs[] = {
 
 void isa_reg_display() {
 	int i, cnt;
+#ifndef CONFIG_RVE
 	for(i = 0,cnt=1;i<sizeof(regs)/sizeof(regs[0]);i++,cnt++) {
 		if(i == 32) printf("%s : %x   \n",regs[i], cpu.pc);
 		else printf("%s : %x   ",regs[i], cpu.gpr[check_reg_idx(i)]);
 		if(cnt % 4 == 0) printf("\n");
 	}
+#endif
+#ifdef CONFIG_RVE
+	for(i = 0,cnt=1;i<16;i++,cnt++) {
+		if(i == 16) printf("pc : %x   \n", cpu.pc);
+		else printf("%s : %x   ",regs[i], cpu.gpr[check_reg_idx(i)]);
+		if(cnt % 4 == 0) printf("\n");
+	}
+#endif
 }
 
 word_t isa_reg_str2val(const char *s, bool *success) {

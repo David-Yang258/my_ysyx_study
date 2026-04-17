@@ -66,7 +66,21 @@ word_t paddr_read(paddr_t addr, int len) {
 }
 
 void paddr_write(paddr_t addr, int len, word_t data) {
-  if (likely(in_pmem(addr))) { pmem_write(addr, len, data); return; }
+  if (likely(in_pmem(addr))) { 
+	  if(addr <= 0x0f000000 || addr >= 0x0f001fff) {
+		Assert(0,"mrom/ out of sram don't support write operation!\n");
+	  }
+	  pmem_write(addr, len, data); 
+	  return; 
+  }
   IFDEF(CONFIG_DEVICE, mmio_write(addr, len, data); return);
+  out_of_bound(addr);
+}
+
+void pmrom_write(paddr_t addr, int len, word_t data) {
+  if (likely(in_pmem(addr))) { 
+	  pmem_write(addr, len, data); 
+	  return; 
+  }
   out_of_bound(addr);
 }

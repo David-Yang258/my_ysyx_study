@@ -4,9 +4,10 @@
 #include "rv32im.h"
 #include <assert.h>
 
-#define CONFIG_MBASE 0x80000000
-#define CONFIG_MSIZE 0x8000000
+#define CONFIG_MBASE 0x0f000000
+#define CONFIG_MSIZE 0x20000000
 #define CONFIG_PC_RESET_OFFSET 0
+#define MROM_VECTOR 0x20000000
 
 #define PMEM_LEFT  ((paddr_t)CONFIG_MBASE)
 #define PMEM_RIGHT ((paddr_t)CONFIG_MBASE + CONFIG_MSIZE -1)

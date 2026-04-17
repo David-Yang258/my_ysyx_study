@@ -124,23 +124,46 @@ int main(int argc, char* argv[]){
 	top->reset= 1;
 	top->eval();
 
+#ifdef wave
+	tfp->dump(contextp->time());
+	contextp->timeInc(1);
+#endif
 	top->clock= 1;
 	top->eval();
 
+#ifdef wave
+	tfp->dump(contextp->time());
+	contextp->timeInc(1);
+#endif
 	top->clock= 0;
 	top->reset=0;
 	top->eval();
 
-	printf("pc = %x\n", DTOP_PC);
+#ifdef wave
+	tfp->dump(contextp->time());
+	contextp->timeInc(1);
+#endif
 
+	while(top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu_reset_chain__DOT__output_chain__DOT__sync_0 != 1){
+		top->clock = !top->clock;
+		top->eval();	
+	}
 	while(DTOP_IFU_STATE != 3){
 		top->clock = 1;
 		top->eval();
-		printf("clk: %d\n",top->clock);
+
+#ifdef wave
+	tfp->dump(contextp->time());
+	contextp->timeInc(1);
+#endif
 		top->clock = 0;
 		top->eval();
-		printf("clk: %d\n",top->clock);
-		printf("rst: %d\n",top->reset);
+
+#ifdef wave
+	tfp->dump(contextp->time());
+	contextp->timeInc(1);
+#endif
+
 #ifdef DEBUGING
 		printf("IFU: ifu_state = %x\n", DTOP_IFU_STATE);
 		printf("LSU: lsu_state = %x\n", top->rootp->ysyxSoCFull__DOT__asic__DOT__cpu__DOT__cpu__DOT__ysyx_26030090_lsu__DOT__mem_state);

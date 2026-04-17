@@ -169,4 +169,4 @@ $(CLEAN_ALL):
 	-@$(MAKE) -s -C $@ clean
 .PHONY: clean-all $(CLEAN_ALL)
 
-#NEMUFLAGS += -b
+NEMUFLAGS += -b

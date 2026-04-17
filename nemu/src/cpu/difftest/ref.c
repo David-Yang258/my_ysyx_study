@@ -23,10 +23,12 @@
 __EXPORT void difftest_memcpy(paddr_t addr, void *buf, size_t n, bool direction) {
 	//uint8_t * addr = (uint8_t*)buf;
 	if(direction == DIFFTEST_TO_REF){
+		
 		for(int i = 0; i < n; i++){
 			//uint8_t data = *((uint8_t*)buf+i);
-			paddr_write(addr+i, 1, *((uint8_t*)buf+i));
+			pmrom_write(addr+i, 1, *((uint8_t*)buf+i));
 		}	
+		
 	}
 	else assert(0);
 }

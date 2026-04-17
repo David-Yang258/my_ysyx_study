@@ -27,7 +27,8 @@ void difftest_step(vaddr_t, vaddr_t);
 CPU_state cpu = {};
 
 void init_diff_cpu(){
-	cpu.pc = RESET_VECTOR;
+	//cpu.pc = RESET_VECTOR;
+	cpu.pc = MROM_VECTOR;
 	for (int i = 0;i<NR_GPR;i++){
 		cpu.gpr[i] = 0;
 	}
@@ -79,7 +80,6 @@ static void exec_once(){
 
 		top->clock = !top->clock;
 		top->eval();
-
 #ifdef wave
 		tfp->dump(contextp->time());
 		contextp->timeInc(1);
@@ -104,7 +104,7 @@ static void execute(uint64_t n){
 	for (;n>0; n--){
 		exec_once();
 		//IFDEF(CONFIG_DIFFTEST,difftest_step(old_pc, cpu.pc));
-		//difftest_step(old_pc, cpu.pc);
+		difftest_step(old_pc, cpu.pc);
 		if(npc_state.state != NPC_RUNNING) break;
 	}
 }
