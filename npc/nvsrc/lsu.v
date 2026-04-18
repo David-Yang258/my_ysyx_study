@@ -97,25 +97,45 @@ always@(posedge clk) begin
 					bready    <= 1'b0;
 					lsu_wcpl    <= 1'b0;
 					awaddr   	<= wbu2lsu_waddr;
-					wdata   	<= wbu2lsu_wdata;
 					awvalid 	<= 1'b1;
 					case(ls_type)
 						`LS_TYPE_B: begin
 							case(wbyte_sel)
-								2'b00: wstrb <= 4'b0001;
-								2'b01: wstrb <= 4'b0010;
-								2'b10: wstrb <= 4'b0100;
-								2'b11: wstrb <= 4'b1000;
+								2'b00: begin 
+									wstrb <= 4'b0001;
+									wdata <= wbu2lsu_wdata;
+								end
+								2'b01: begin 
+									wstrb <= 4'b0010;
+									wdata <= wbu2lsu_wdata << 8;
+								end
+								2'b10: begin 
+									wstrb <= 4'b0100;
+									wdata <= wbu2lsu_wdata << 16;
+								end
+								2'b11: begin 
+									wstrb <= 4'b1000;
+									wdata <= wbu2lsu_wdata << 24;
+								end
 							endcase
 						end	
 						`LS_TYPE_H:begin
 							case(wbyte_sel)
-								2'b00: wstrb <= 4'b0011;
-								2'b10: wstrb <= 4'b1100;
+								2'b00: begin 
+									wstrb <= 4'b0011;
+									wdata <= wbu2lsu_wdata;
+								end
+								2'b10: begin
+								   	wstrb <= 4'b1100;
+									wdata <= wbu2lsu_wdata << 16;
+								end
 								default: bus_error <= 1'b1;
 							endcase
 						end	
-						`LS_TYPE_W: wstrb <= 4'b1111; 
+						`LS_TYPE_W: begin 
+							wstrb <= 4'b1111; 
+							wdata <= wbu2lsu_wdata;
+						end
 						default:  wstrb <= 4'b0; 
 					endcase
 					mem_state  <= MEM_WAIT_AR;
