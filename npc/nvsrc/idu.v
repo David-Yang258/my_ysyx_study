@@ -42,6 +42,9 @@ module idu (
 
 	output reg 							mem_re,
 	output reg 							mem_we,
+	output reg 							reg_we,
+	output reg 							csr_we1,
+	output reg 							csr_we2,
 
 	output reg  [2:0] 					ls_type,
 
@@ -108,6 +111,8 @@ always@(*) begin
 	wb_sel = `ALU_TO_REG;
 	alu_op = 6'b0;
 	mem_re = 1'b0;
+	mem_we = 1'b0;
+	reg_we = 1'b0;
 	branch = 1'b0;
 	jal    = 1'b0;
 	jalr   = 1'b0;
@@ -122,6 +127,7 @@ always@(*) begin
 			imm = immU; 										rd = rd_dec;
 			alu_src2_sel = `ALU_SRC2_IMM; 
 			wb_sel = `ALU_TO_REG;
+			reg_we = 1'b1;
 			if(opcode == 7'b0110111) begin
 				alu_op = `ALU_LUI;
 			end	
@@ -134,6 +140,7 @@ always@(*) begin
 			imm = immI; rs1 = rs1_dec; 							rd = rd_dec;
 			alu_src2_sel = `ALU_SRC2_PC4;
 			wb_sel = `ALU_TO_PC_REG;
+			reg_we = 1'b1;
 			alu_op = `ALU_ADD;
 			jalr   = 1'b1;
 		end
@@ -141,6 +148,7 @@ always@(*) begin
 			imm = immJ; 										rd = rd_dec;
 			alu_src2_sel = `ALU_SRC2_PC4;
 			wb_sel = `ALU_TO_PC_REG;
+			reg_we = 1'b1;
 			alu_op = `ALU_ADD;
 			jal    = 1'b1;
 		end
@@ -191,6 +199,7 @@ always@(*) begin
 				default:; 
 			endcase
 			mem_re = 1'b1;
+			reg_we = 1'b1;
 		end
 		OPCODE_S_TYPE:begin
 			imm = immS; rs1 = rs1_dec; rs2 = rs2_dec;
@@ -209,6 +218,7 @@ always@(*) begin
 			imm = immI; rs1 = rs1_dec; 							rd = rd_dec;
 			alu_src2_sel = `ALU_SRC2_IMM;
 			wb_sel = `ALU_TO_REG;
+			reg_we = 1'b1;
 			case(funct3)
 				3'b000: alu_op = `ALU_ADD;
 				3'b010: alu_op = `ALU_SLT;
@@ -228,6 +238,7 @@ always@(*) begin
 						rs1 = rs1_dec; rs2 = rs2_dec; 			rd = rd_dec;
 			alu_src2_sel = `ALU_SRC2_RS2;
 			wb_sel = `ALU_TO_REG;
+			reg_we = 1'b1;
 			case(funct3)
 				3'b000: begin 
 					if(funct7 == 7'b0) alu_op = `ALU_ADD;
@@ -258,6 +269,8 @@ always@(*) begin
 						csr_waddr1 = CSR_MEPC[11:0];
 						csr_waddr2 = CSR_MCAUSE[11:0];
 						wb_sel     = `ALU_TO_CSR_PC;
+						csr_we1    = 1'b1;
+						csr_we2    = 1'b1;
 						ecall 	   = 1'b1;
 					end
 					else if(Efunct12 == 12'h001) begin 
@@ -273,20 +286,26 @@ always@(*) begin
 				3'b001: begin
 						csr_raddr  = imm[11:0];
 						csr_waddr1 = imm[11:0];
-						alu_op = `ALU_OP_NON;
-						wb_sel = `ALU_TO_CSR_REG;
+						alu_op 	   = `ALU_OP_NON;
+						wb_sel 	   = `ALU_TO_CSR_REG;
+						csr_we1    = 1'b1;
+						reg_we     = 1'b1;
 				end
 				3'b010:begin
 						csr_raddr  = imm[11:0];
 						csr_waddr1 = imm[11:0];
 						alu_op 	   = `ALU_OR;
-						wb_sel = `ALU_TO_CSR_REG;
+						wb_sel     = `ALU_TO_CSR_REG;
+						csr_we1    = 1'b1;
+						reg_we     = 1'b1;
 				end
 				3'b011:begin
 						csr_raddr  = imm[11:0];
 						csr_waddr1 = imm[11:0];
 						alu_op 	   = `ALU_ANDN;
-						wb_sel = `ALU_TO_CSR_REG;
+						wb_sel 	   = `ALU_TO_CSR_REG;
+						csr_we1    = 1'b1;
+						reg_we     = 1'b1;
 				end
 				default:; 
 			endcase

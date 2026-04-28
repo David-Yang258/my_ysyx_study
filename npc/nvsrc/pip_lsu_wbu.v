@@ -17,6 +17,10 @@ module pip_lsu_wbu(
 
 	input 		[`BUS_DATA_WIDTH-1:0] lsu_mem_rdata,
 
+	input 							  lsu_reg_we,
+	input 							  lsu_csr_we1,
+	input 							  lsu_csr_we2,
+
 	output reg 	[2:0] 				  wbu_wb_sel,
 
 	output reg 	[`REG_ADDR_WIDTH-1:0] wbu_rd_waddr,
@@ -27,7 +31,11 @@ module pip_lsu_wbu(
 	output reg 	[`BUS_DATA_WIDTH-1:0] wbu_csr_wdata1,
 	output reg 	[`BUS_DATA_WIDTH-1:0] wbu_csr_wdata2,
 
-	output reg 	[`BUS_DATA_WIDTH-1:0] wbu_mem_rdata
+	output reg 	[`BUS_DATA_WIDTH-1:0] wbu_mem_rdata,
+	
+	output reg 						  wbu_reg_we,
+	output reg 						  wbu_csr_we1,
+	output reg 						  wbu_csr_we2
 
 );
 
@@ -41,6 +49,9 @@ always@(posedge clk or negedge rst_n) begin
 		wbu_csr_wdata1 	<= 32'b0;
 		wbu_csr_wdata2 	<= 32'b0;
 		wbu_mem_rdata 	<= 32'b0;
+		wbu_reg_we 		<= 1'b0;
+		wbu_csr_we1 	<= 1'b0;
+		wbu_csr_we2 	<= 1'b0;
 	end	
 	else if(!stall) begin
 		wbu_wb_sel 	 	<= lsu_wb_sel 	 	;
@@ -51,6 +62,9 @@ always@(posedge clk or negedge rst_n) begin
 		wbu_csr_wdata1 	<= lsu_csr_wdata1 	;
 		wbu_csr_wdata2 	<= lsu_csr_wdata2 	;
 		wbu_mem_rdata 	<= lsu_mem_rdata 	;
+		wbu_reg_we 		<= lsu_reg_we;
+		wbu_csr_we1 	<= lsu_csr_we1;
+		wbu_csr_we2 	<= lsu_csr_we2;
 	end
 end
 

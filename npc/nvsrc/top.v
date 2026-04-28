@@ -9,69 +9,66 @@ module top(
 );
 
 wire 						stall;
-wire 						flush;
 wire [`BUS_DATA_WIDTH-1:0]  jmp_addr;
 
 wire [`BUS_DATA_WIDTH-1:0]  instruction;
 
 //wire mem_we;
-wire 						idu_mem_re;
-wire 						idu_mem_we;
+wire 						id_mem_re;
+wire 						id_mem_we;
+wire 						id_reg_we;
+wire  						id_csr_we1;
+wire  						id_csr_we2;
 //wire csr_we1;
 //wire csr_we2;
-wire 						csr_flag;
-wire 						ecall;
-wire 						mret;
-wire 						branch;
-wire 						jal;
-wire 						jalr;
-wire 						auipc;
-wire [1:0] 					alu_src2_sel;
-wire [2:0] 					ls_type;
-wire [2:0] 					wb_sel;
-wire [3:0] 					branch_type;
-wire [5:0] 					alu_op;
-wire [`BUS_DATA_WIDTH-1:0] 	idu_imm;
-wire [`REG_ADDR_WIDTH-1:0] 	rd_addr;
-wire [`REG_ADDR_WIDTH-1:0] 	rs1_addr;
-wire [`REG_ADDR_WIDTH-1:0] 	rs2_addr;
-wire [`CSR_ADDR_WIDTH-1:0] 	csr_raddr;
-wire [`CSR_ADDR_WIDTH-1:0] 	csr_waddr1;
-wire [`CSR_ADDR_WIDTH-1:0] 	csr_waddr2;
+wire 						id_csr_flag;
+wire 						id_ecall;
+wire 						id_mret;
+wire 						id_branch;
+wire 						id_jal;
+wire 						id_jalr;
+wire 						id_auipc;
+wire [1:0] 					id_alu_src2_sel;
+wire [2:0] 					id_ls_type;
+wire [2:0] 					id_wb_sel;
+wire [3:0] 					id_branch_type;
+wire [5:0] 					id_alu_op;
+wire [`BUS_DATA_WIDTH-1:0] 	id_imm;
+wire [`REG_ADDR_WIDTH-1:0] 	id_rd_addr;
+wire [`REG_ADDR_WIDTH-1:0] 	id_rs1_addr;
+wire [`REG_ADDR_WIDTH-1:0] 	id_rs2_addr;
+wire [`CSR_ADDR_WIDTH-1:0] 	id_csr_raddr;
+wire [`CSR_ADDR_WIDTH-1:0] 	id_csr_waddr1;
+wire [`CSR_ADDR_WIDTH-1:0] 	id_csr_waddr2;
 
 wire 						exu_branch_taken;
-wire [`BUS_DATA_WIDTH-1:0] 	rs1_src;
-wire [`BUS_DATA_WIDTH-1:0] 	rs2_src;
-wire [`BUS_DATA_WIDTH-1:0] 	csr_src;
+wire [`BUS_DATA_WIDTH-1:0] 	id_rs1_src;
+wire [`BUS_DATA_WIDTH-1:0] 	id_rs2_src;
+wire [`BUS_DATA_WIDTH-1:0] 	id_csr_src;
+
+
 wire [`BUS_DATA_WIDTH-1:0] 	exu_branch_addr;
 wire [`BUS_DATA_WIDTH-1:0] 	exu_alu_result;
 wire [`BUS_DATA_WIDTH-1:0] 	exu_rd_wdata;
 wire [`BUS_DATA_WIDTH-1:0] 	exu_csr_wdata1;
 wire [`BUS_DATA_WIDTH-1:0] 	exu_csr_wdata2;
-wire 						exu_ready;
 
-wire 						lsu_mem_re;
-wire 						lsu_mem_we;
 wire [`BUS_DATA_WIDTH-1:0] 	lsu_mem_rdata;
 
-wire 						final_mem_we;
 wire 						final_reg_we;
 wire 						final_csr_we1;
 wire 						final_csr_we2;
 wire [`REG_ADDR_WIDTH-1:0] 	final_rd_waddr;
 wire [`CSR_ADDR_WIDTH-1:0] 	final_csr_waddr1;
 wire [`CSR_ADDR_WIDTH-1:0] 	final_csr_waddr2;
-wire [`BUS_DATA_WIDTH-1:0] 	final_mem_waddr;
 wire [`BUS_DATA_WIDTH-1:0] 	final_rd_wdata;
 wire [`BUS_DATA_WIDTH-1:0] 	final_csr_wdata1;
 wire [`BUS_DATA_WIDTH-1:0] 	final_csr_wdata2;
-wire [`BUS_DATA_WIDTH-1:0] 	final_mem_wdata;
 
-wire ifu_stall_rqst, lsu_stall_rqst, hazard_unit_stall_rqst;
+wire ifu_stall_rqst, lsu_stall_rqst;
 
-assign stall = ifu_stall_rqst | lsu_stall_rqst | hazard_unit_stall_rqst;
+assign stall = ifu_stall_rqst | lsu_stall_rqst;
 
-assign lsu_mem_re 	 = idu_mem_re;
 assign inst = instruction;
 
 wire 						ifu_arvalid;
@@ -101,12 +98,24 @@ assign ifu_wready  = 1'b0;
 assign ifu_bresp   = 2'b00;
 assign ifu_bvalid  = 1'b0;
 
+wire					hazard_stall_pc;
+wire					hazard_stall_if_id;
+wire					hazard_stall_id_ex;
+wire					hazard_stall_ex_mem;
+wire					hazard_stall_mem_wb;
+wire					hazard_flush_if_id;
+wire					hazard_flush_id_ex;
+/*verilator lint_off UNUSEDSIGNAL*/
+wire					hazard_flush_ex_mem;
+wire					hazard_flush_mem_wb;
+/*verilator lint_on UNUSEDSIGNAL*/
+
 ifu inst_ifu(
 	.clk 			(clk),
 	.rst_n  		(rst_n),
-	.branch_happen  (jmp_set),
-	.branch_addr 	(jmp_addr),
-	.stall 			(stall),
+	.branch_happen  (exu_branch_taken),
+	.branch_addr 	(exu_branch_addr),
+	.stall 			(hazard_stall_pc),
 	.ifu_stall_rqst (ifu_stall_rqst),
 
 	.arvalid 		(ifu_arvalid),
@@ -136,124 +145,160 @@ ifu inst_ifu(
 	.o_ifu_state 	(o_ifu_state)
 );
 
+wire [`BUS_DATA_WIDTH-1:0] if_id_pc;
+wire [`BUS_DATA_WIDTH-1:0] if_id_inst;
+/*verilator lint_off UNUSEDSIGNAL*/
+wire [`REG_ADDR_WIDTH-1:0] if_id_rd; 
+/*verilator lint_on  UNUSEDSIGNAL*/
+wire [`REG_ADDR_WIDTH-1:0] if_id_rs1; 
+wire [`REG_ADDR_WIDTH-1:0] if_id_rs2; 
+
 pip_if_id inst_pip_if_id(
 	.clk 			(clk 		),
 	.rst_n 			(rst_n 		),
 	.if_inst 		(instruction),
 	.if_pc 			(pc 		),
-	.stall 			(stall 		),
+	.stall 			(hazard_stall_if_id),
+	.flush 			(hazard_flush_if_id),
+	.if_id_rd 		(if_id_rd 	),
+	.if_id_rs1 		(if_id_rs1 	),
+	.if_id_rs2 		(if_id_rs2 	),
 	.if_id_pc 		(if_id_pc 	),
 	.if_id_inst 	(if_id_inst )
 );
 
+/*verilator lint_off UNUSEDSIGNAL*/
+wire 				id_predict_taken;
+/*verilator lint_on  UNUSEDSIGNAL*/
+
 idu inst_idu(
 	.inst 			(if_id_inst ),
-	.imm 			(idu_imm 	),
-	.rd 			(rd_addr 	),
-	.rs1 			(rs1_addr 	),
-	.rs2 			(rs2_addr   ),
-	.csr_raddr 		(csr_raddr 	),
-	.csr_waddr1 	(csr_waddr1 ),
-	.csr_waddr2 	(csr_waddr2 ),
-	.alu_op 		(alu_op 	),
-	.alu_src2_sel 	(alu_src2_sel),
-	.mem_we 		(idu_mem_we),
-	.mem_re 		(idu_mem_re ),
-	.ls_type 		(ls_type 	),
-	.wb_sel 		(wb_sel 	),
-	.branch 		(branch 	),
-	.jal 			(jal 		),
-	.jalr 			(jalr 		),
-	.auipc 			(auipc 		),
-	.branch_type 	(branch_type),
+
+	.imm 			(id_imm),
+	.rd 			(id_rd_addr),
+	.rs1 			(id_rs1_addr),
+	.rs2 			(id_rs2_addr),
+	.csr_raddr 		(id_csr_raddr),
+	.csr_waddr1 	(id_csr_waddr1),
+	.csr_waddr2 	(id_csr_waddr2),
+	.alu_op 		(id_alu_op),
+	.alu_src2_sel 	(id_alu_src2_sel),
+	.mem_we 		(id_mem_we),
+	.mem_re 		(id_mem_re),
+	.reg_we 		(id_reg_we),
+	.csr_we1 		(id_csr_we1),
+	.csr_we2 		(id_csr_we2),
+	.ls_type 		(id_ls_type),
+	.wb_sel 		(id_wb_sel),
+	.branch 		(id_branch),
+	.jal 			(id_jal),
+	.jalr 			(id_jalr),
+	.auipc 			(id_auipc),
+	.branch_type 	(id_branch_type),
 	//.csr_we1 		(csr_we1),
 	//.csr_we2 		(csr_we2),
-	.csr_flag 		(csr_flag 	),
-	.ecall 			(ecall 		),
-	.Ebreak 		(Ebreak 	),
-	.mret 			(mret 		),
-	.predict_taken  (predict_taken)
+	.csr_flag 		(id_csr_flag),
+	.ecall 			(id_ecall),
+	.Ebreak 		(Ebreak),
+	.mret 			(id_mret),
+	.predict_taken  (id_predict_taken)
 );
-wire id_ex_imm;
-wire id_ex_rs1_src;
-wire id_ex_rs2_src;
-wire id_ex_csr_src;
-wire id_ex_pc;
-wire id_ex_alu_op;
-wire id_ex_alu_src2_sel;
-wire id_ex_mem_re;
-wire id_ex_mem_we;
-wire id_ex_ls_type;
-wire id_ex_wb_sel;
-wire id_ex_branch;
-wire id_ex_jal;
-wire id_ex_jalr;
-wire id_ex_auipc;
-wire id_ex_ecall;
-wire id_ex_mret;
-wire id_ex_branch_type;
-wire id_ex_csr_flag;
+wire [`BUS_DATA_WIDTH-1:0] 	id_ex_imm;
+wire [`BUS_DATA_WIDTH-1:0] 	id_ex_rs1_src;
+wire [`BUS_DATA_WIDTH-1:0] 	id_ex_rs2_src;
+wire [`BUS_DATA_WIDTH-1:0] 	id_ex_csr_src;
+wire [`BUS_DATA_WIDTH-1:0] 	id_ex_pc;
+wire [5:0] 				   	id_ex_alu_op;
+wire [1:0] 				   	id_ex_alu_src2_sel;
 
-wire id_ex_rd_addr;
-wire id_ex_rs1_addr;
-wire id_ex_rs2_addr;
+wire						id_ex_mem_re;
+wire						id_ex_mem_we;
+wire 						id_ex_reg_we;
+wire 						id_ex_csr_we1;
+wire 						id_ex_csr_we2;
 
-wire id_ex_csr_raddr;
-wire id_ex_csr_waddr1;
-wire id_ex_csr_waddr2;
+wire [2:0] 					id_ex_ls_type;
+wire [2:0] 					id_ex_wb_sel;
+wire						id_ex_branch;
+wire						id_ex_jal;
+wire						id_ex_jalr;
+wire						id_ex_auipc;
+wire						id_ex_ecall;
+wire						id_ex_mret;
+wire [3:0] 					id_ex_branch_type;
+wire						id_ex_csr_flag;
+
+wire [`REG_ADDR_WIDTH-1:0] 	id_ex_rd_addr;
+wire [`REG_ADDR_WIDTH-1:0] 	id_ex_rs1_addr;
+wire [`REG_ADDR_WIDTH-1:0] 	id_ex_rs2_addr;
+
+/*verilator lint_off UNUSEDSIGNAL*/
+wire [`CSR_ADDR_WIDTH-1:0] 	id_ex_csr_raddr;
+/*verilator lint_on  UNUSEDSIGNAL*/
+wire [`CSR_ADDR_WIDTH-1:0] 	id_ex_csr_waddr1;
+wire [`CSR_ADDR_WIDTH-1:0] 	id_ex_csr_waddr2;
 
 
 pip_id_ex inst_id_ex(
 	.clk 			(clk),
 	.rst_n 			(rst_n),
 
-	.flush 			(flush),
-	.stall 			(stall),
+	.flush 			(hazard_flush_id_ex),
+	.stall 			(hazard_stall_id_ex),
 
-	.id_imm 		(idu_imm),
+	.id_imm 		(id_imm),
 
-	.id_rd 			(rd_addr),
-	.id_rs1 		(rs1_addr),
-	.id_rs2 		(rs2_addr),
+	.id_rd 			(id_rd_addr),
+	.id_rs1 		(id_rs1_addr),
+	.id_rs2 		(id_rs2_addr),
 
-	.id_csr_raddr 	(csr_raddr),
-	.id_csr_waddr1 	(csr_waddr1),
-	.id_csr_waddr2 	(csr_waddr2),
+	.id_csr_raddr 	(id_csr_raddr),
+	.id_csr_waddr1 	(id_csr_waddr1),
+	.id_csr_waddr2 	(id_csr_waddr2),
 
-	.id_rs1_src 	(rs1_src),
-	.id_rs2_src 	(rs2_src),
-	.id_csr_src 	(csr_src),
+	.id_rs1_src 	(id_rs1_src),
+	.id_rs2_src 	(id_rs2_src),
+	.id_csr_src 	(id_csr_src),
 
 	.id_pc 			(if_id_pc),
 
-	.id_alu_op 		(alu_op),
-	.id_alu_src2_sel(alu_src2_sel),
+	.id_alu_op 		(id_alu_op),
+	.id_alu_src2_sel(id_alu_src2_sel),
 
-	.id_mem_re 		(idu_mem_re),
-	.id_mem_we 		(idu_mem_we),
+	.id_mem_re 		(id_mem_re),
+	.id_mem_we 		(id_mem_we),
+	.id_reg_we  	(id_reg_we),
+	.id_csr_we1 	(id_csr_we1),
+	.id_csr_we2 	(id_csr_we2),
 
-	.id_ls_type 	(ls_type),
-	.id_wb_sel 		(wb_sel),
+	.id_ls_type 	(id_ls_type),
+	.id_wb_sel 		(id_wb_sel),
 
-	.id_branch 		(branch),
-	.id_jal 		(jal),
-	.id_jalr 		(jalr),
-	.id_auipc 		(auipc),
-	.id_ecall 		(ecall),
-	.id_mret 		(mret),
+	.id_branch 		(id_branch),
+	.id_jal 		(id_jal),
+	.id_jalr 		(id_jalr),
+	.id_auipc 		(id_auipc),
+	.id_ecall 		(id_ecall),
+	.id_mret 		(id_mret),
 
-	.id_branch_type (branch_type),
-	.id_csr_flag 	(csr_flag),
+	.id_branch_type (id_branch_type),
+	.id_csr_flag 	(id_csr_flag),
 
 	.ex_imm 		(id_ex_imm),
 	.ex_rs1_src 	(id_ex_rs1_src),
 	.ex_rs2_src 	(id_ex_rs2_src),
 	.ex_csr_src 	(id_ex_csr_src),
+
 	.ex_pc 			(id_ex_pc),
 	.ex_alu_op 		(id_ex_alu_op),
 	.ex_alu_src2_sel(id_ex_alu_src2_sel),
+
 	.ex_mem_re 		(id_ex_mem_re),
 	.ex_mem_we 		(id_ex_mem_we),
+	.ex_reg_we 		(id_ex_reg_we),
+	.ex_csr_we1 	(id_ex_csr_we1),
+	.ex_csr_we2 	(id_ex_csr_we2),
+
 	.ex_ls_type 	(id_ex_ls_type),
 	.ex_wb_sel 		(id_ex_wb_sel),
 	.ex_branch 		(id_ex_branch),
@@ -274,14 +319,22 @@ pip_id_ex inst_id_ex(
 	.ex_csr_waddr2 	(id_ex_csr_waddr2)
 );
 
+wire [1:0] 					hazard_forward_a;
+wire [1:0] 					hazard_forward_b;
+wire [`BUS_DATA_WIDTH-1:0] 	mem_loaded_res;
+wire [`BUS_DATA_WIDTH-1:0] 	final_wb_res;
+
 exu inst_exu(
 	.imm 			(id_ex_imm),
+
 	.rs1_src 		(id_ex_rs1_src),
 	.rs2_src 		(id_ex_rs2_src),
 	.csr_src 		(id_ex_csr_src),
+
 	.pc 			(id_ex_pc),
 	.alu_op 		(id_ex_alu_op),
 	.alu_src2_sel 	(id_ex_alu_src2_sel),
+
 	.jal 			(id_ex_jal),
 	.jalr 			(id_ex_jalr),
 	.auipc 			(id_ex_auipc),
@@ -292,10 +345,89 @@ exu inst_exu(
 	.csr_flag 		(id_ex_csr_flag),
 	.branch_taken 	(exu_branch_taken),
 	.branch_addr 	(exu_branch_addr),
+
 	.alu_result 	(exu_alu_result),
+
+	.mem_loaded_res (mem_loaded_res),
+	.final_wb_res 	(final_wb_res),
+
+	.forward_a 		(hazard_forward_a),
+	.forward_b 		(hazard_forward_b),
+
 	.rd_wdata 		(exu_rd_wdata),
 	.csr_wdata1 	(exu_csr_wdata1),
 	.csr_wdata2 	(exu_csr_wdata2)
+);
+
+wire [`BUS_DATA_WIDTH-1:0] 	ex_lsu_rd_wdata;
+wire [`BUS_DATA_WIDTH-1:0] 	ex_lsu_csr_wdata1;
+wire [`BUS_DATA_WIDTH-1:0] 	ex_lsu_csr_wdata2;
+wire [`BUS_DATA_WIDTH-1:0] 	ex_lsu_rs2_src;
+
+wire [`REG_ADDR_WIDTH-1:0] 	ex_lsu_rd;
+wire [`CSR_ADDR_WIDTH-1:0] 	ex_lsu_csr_waddr1;
+wire [`CSR_ADDR_WIDTH-1:0] 	ex_lsu_csr_waddr2;
+
+wire [`BUS_DATA_WIDTH-1:0] 	ex_lsu_mem_raddr;
+wire [`BUS_DATA_WIDTH-1:0] 	ex_lsu_mem_waddr;
+
+wire  						ex_lsu_mem_re;
+wire 						ex_lsu_mem_we;
+wire [2:0] 					ex_lsu_ls_type;
+wire [2:0] 					ex_lsu_wb_sel;
+
+wire 						ex_lsu_reg_we;
+wire 						ex_lsu_csr_we1;
+wire 						ex_lsu_csr_we2;
+
+pip_ex_lsu inst_pip_ex_lsu(
+	.clk 			(clk),
+	.rst_n 			(rst_n),
+	
+	.ex_rd_wdata 	(exu_rd_wdata),
+	.ex_csr_wdata1  (exu_csr_wdata1),
+	.ex_csr_wdata2  (exu_csr_wdata2),
+	.ex_rs2_src 	(id_ex_rs2_src),
+
+	.ex_rd 			(id_ex_rd_addr),
+	.ex_csr_waddr1  (id_ex_csr_waddr1),
+	.ex_csr_waddr2  (id_ex_csr_waddr2),
+
+	.ex_mem_raddr  	(exu_alu_result),
+	.ex_mem_waddr 	(exu_alu_result),
+
+	.ex_mem_re 		(id_ex_mem_re),
+	.ex_mem_we 		(id_ex_mem_we),
+	.ex_reg_we 		(id_ex_reg_we),
+	.ex_csr_we1 	(id_ex_csr_we1),
+	.ex_csr_we2 	(id_ex_csr_we2),
+
+	.ex_ls_type 	(id_ex_ls_type),
+	.ex_wb_sel 		(id_ex_wb_sel),
+
+	.stall 			(hazard_stall_ex_mem),
+
+	.lsu_rd_wdata 	(ex_lsu_rd_wdata),
+	.lsu_csr_wdata1 (ex_lsu_csr_wdata1),
+	.lsu_csr_wdata2 (ex_lsu_csr_wdata2),
+	.lsu_rs2_src 	(ex_lsu_rs2_src),
+
+	.lsu_rd 		(ex_lsu_rd),
+	.lsu_csr_waddr1 (ex_lsu_csr_waddr1),
+	.lsu_csr_waddr2 (ex_lsu_csr_waddr2),
+
+	.lsu_mem_raddr  (ex_lsu_mem_raddr),
+	.lsu_mem_waddr  (ex_lsu_mem_waddr),
+
+	.lsu_mem_re 	(ex_lsu_mem_re),
+	.lsu_mem_we 	(ex_lsu_mem_we),
+	.lsu_reg_we 	(ex_lsu_reg_we),
+	.lsu_csr_we1 	(ex_lsu_csr_we1),
+	.lsu_csr_we2 	(ex_lsu_csr_we2),
+
+	.lsu_ls_type 	(ex_lsu_ls_type),
+	.lsu_wb_sel 	(ex_lsu_wb_sel)
+
 );
 
 wire 						lsu_arvalid;
@@ -323,14 +455,20 @@ wire 						lsu_bready;
 lsu inst_lsu(
 	.clk 			(clk),
 	.rst_n 			(rst_n),
-	.mem_re 		(lsu_mem_re),
-	.mem_we 		(final_mem_we),
-	.ls_type 		(ls_type),
-	.ex_lsu_raddr	(exu_alu_result),
-	.ex_lsu_waddr	(final_mem_waddr),
-	.ex_lsu_wdata 	(final_mem_wdata),
-	.stall 			(stall),
+
+	.mem_re 		(ex_lsu_mem_re),
+	.mem_we 		(ex_lsu_mem_we),
+
+	.ls_type 		(ex_lsu_ls_type),
+
+	.ex_lsu_raddr	(ex_lsu_mem_raddr),
+	.ex_lsu_waddr	(ex_lsu_mem_waddr),
+	.ex_lsu_wdata 	(ex_lsu_rs2_src),
+
+	.mem_rdata 		(lsu_mem_rdata),
 	.lsu_stall_rqst (lsu_stall_rqst),
+
+	.stall 			(stall),
 	
 	.arvalid 		(lsu_arvalid),
 	.araddr 		(lsu_araddr),
@@ -353,22 +491,88 @@ lsu inst_lsu(
 	.bresp 			(lsu_bresp),
 	.bvalid 		(lsu_bvalid),
 	.bready 		(lsu_bready)
-	//.lsu_ready 		(lsu_ready),
-	//.o_valid 		(lsu_valid),
 );
+
+assign mem_loaded_res = lsu_mem_rdata;
+
+wire [2:0] 					lsu_wbu_wb_sel;
+	
+wire [`REG_ADDR_WIDTH-1:0]	lsu_wbu_rd;
+wire [`CSR_ADDR_WIDTH-1:0]	lsu_wbu_csr_waddr1;
+wire [`CSR_ADDR_WIDTH-1:0] 	lsu_wbu_csr_waddr2;
+
+wire [`BUS_DATA_WIDTH-1:0] 	lsu_wbu_rd_wdata;
+wire [`BUS_DATA_WIDTH-1:0] 	lsu_wbu_csr_wdata1;
+wire [`BUS_DATA_WIDTH-1:0] 	lsu_wbu_csr_wdata2;
+
+wire [`BUS_DATA_WIDTH-1:0]  lsu_wbu_mem_rdata;
+
+wire 						lsu_wbu_reg_we;
+wire 						lsu_wbu_csr_we1;
+wire 						lsu_wbu_csr_we2;
+
+pip_lsu_wbu inst_pip_lsu_wbu(
+	.clk 			(clk),
+	.rst_n 			(rst_n),
+	.stall 			(hazard_stall_mem_wb),
+
+	.lsu_wb_sel 	(ex_lsu_wb_sel),
+	
+	.lsu_rd_waddr 	(ex_lsu_rd),
+	.lsu_csr_waddr1 (ex_lsu_csr_waddr1),
+	.lsu_csr_waddr2 (ex_lsu_csr_waddr2),
+
+	.lsu_rd_wdata 	(ex_lsu_rd_wdata),
+	.lsu_csr_wdata1 (ex_lsu_csr_wdata1),
+	.lsu_csr_wdata2 (ex_lsu_csr_wdata2),
+
+	.lsu_mem_rdata  (lsu_mem_rdata),
+
+	.lsu_reg_we 	(ex_lsu_reg_we),
+	.lsu_csr_we1 	(ex_lsu_csr_we1),
+	.lsu_csr_we2 	(ex_lsu_csr_we2),
+
+	.wbu_wb_sel 	(lsu_wbu_wb_sel),
+	
+	.wbu_rd_waddr 	(lsu_wbu_rd),
+	.wbu_csr_waddr1 (lsu_wbu_csr_waddr1),
+	.wbu_csr_waddr2 (lsu_wbu_csr_waddr2),
+
+	.wbu_rd_wdata 	(lsu_wbu_rd_wdata),
+	.wbu_csr_wdata1 (lsu_wbu_csr_wdata1),
+	.wbu_csr_wdata2 (lsu_wbu_csr_wdata2),
+
+	.wbu_mem_rdata  (lsu_wbu_mem_rdata),
+
+	.wbu_reg_we 	(lsu_wbu_reg_we),
+	.wbu_csr_we1 	(lsu_wbu_csr_we1),
+	.wbu_csr_we2 	(lsu_wbu_csr_we2)
+);
+
+assign final_wb_res = lsu_wbu_rd_wdata;
 
 wbu inst_wbu(
 	.clk 			(clk),
 	.rst_n 			(rst_n),
-	.wb_sel 		(wb_sel),
-	.rd_waddr 		(rd_addr),
-	.csr_waddr1 	(csr_waddr1),
-	.csr_waddr2 	(csr_waddr2),
-	.rd_wdata 		(exu_rd_wdata),
-	.csr_wdata1 	(exu_csr_wdata1),
-	.csr_wdata2 	(exu_csr_wdata2),
-	.mem_rdata 		(lsu_mem_rdata),
+
+	.wb_sel 		(lsu_wbu_wb_sel),
+
+	.rd_waddr 		(lsu_wbu_rd),
+	.csr_waddr1 	(lsu_wbu_csr_waddr1),
+	.csr_waddr2 	(lsu_wbu_csr_waddr2),
+
+	.rd_wdata 		(lsu_wbu_rd_wdata),
+	.csr_wdata1 	(lsu_wbu_csr_wdata1),
+	.csr_wdata2 	(lsu_wbu_csr_wdata2),
+
+	.mem_rdata 		(lsu_wbu_mem_rdata),
+
+	.lsu_reg_we 	(lsu_wbu_reg_we),
+	.lsu_csr_we1 	(lsu_wbu_csr_we1),
+	.lsu_csr_we2 	(lsu_wbu_csr_we2),
+
 	.stall 			(stall),
+
 	.final_rd_waddr (final_rd_waddr),
 	.final_csr_waddr1(final_csr_waddr1),
 	.final_csr_waddr2(final_csr_waddr2),
@@ -380,8 +584,40 @@ wbu inst_wbu(
 	.final_reg_we 	(final_reg_we)
 );
 
+
+
 hazard_unit inst_hazard_unit(
-	.rs1_addr_id 	(rs1_addr),
+	.rs1_addr_id 	(if_id_rs1),
+	.rs2_addr_id 	(if_id_rs2),
+
+	.rs1_addr_ex 	(id_ex_rs1_addr),
+	.rs2_addr_ex 	(id_ex_rs2_addr),
+	.rd_addr_ex 	(id_ex_rd_addr),
+	.mem_re_ex 		(id_ex_mem_re),
+
+	.branch_taken_ex(exu_branch_taken),
+
+	.rd_addr_mem 	(ex_lsu_rd),
+	.reg_we_mem 	(ex_lsu_reg_we),
+
+	.rd_addr_wb 	(lsu_wbu_rd),
+	.reg_we_wb 		(lsu_wbu_reg_we),
+
+	.ifu_stall_req 	(ifu_stall_rqst),
+	.lsu_stall_req 	(lsu_stall_rqst),
+
+	.stall_pc 		(hazard_stall_pc),
+	.stall_if_id 	(hazard_stall_if_id),
+	.stall_id_ex 	(hazard_stall_id_ex),
+	.stall_ex_mem 	(hazard_stall_ex_mem),
+	.stall_mem_wb 	(hazard_stall_mem_wb),
+	.flush_if_id 	(hazard_flush_if_id),
+	.flush_id_ex 	(hazard_flush_id_ex),
+	.flush_ex_mem 	(hazard_flush_ex_mem),
+	.flush_mem_wb 	(hazard_flush_mem_wb),
+
+	.forward_a 		(hazard_forward_a),
+	.forward_b 		(hazard_forward_b)
 );
 
 gpr inst_gpr(
@@ -389,22 +625,22 @@ gpr inst_gpr(
 	.wdata 			(final_rd_wdata),
 	.waddr 			(final_rd_waddr),
 	.wen 			(final_reg_we),
-	.raddr1 		(rs1_addr),
-	.raddr2 		(rs2_addr),
-	.rdata1 		(rs1_src),
-	.rdata2 		(rs2_src)
+	.raddr1 		(id_rs1_addr),
+	.raddr2 		(id_rs2_addr),
+	.rdata1 		(id_rs1_src),
+	.rdata2 		(id_rs2_src)
 );
 
 csr inst_csr(
 	.clk 			(clk),
 	.csr_wen1 		(final_csr_we1),
 	.csr_wen2		(final_csr_we2),
-	.csr_raddr 		(csr_raddr),
+	.csr_raddr 		(id_csr_raddr),
 	.csr_waddr1 	(final_csr_waddr1),
 	.csr_waddr2 	(final_csr_waddr2),
 	.csr_wdata1 	(final_csr_wdata1),
 	.csr_wdata2 	(final_csr_wdata2),
-	.csr_rdata 		(csr_src)
+	.csr_rdata 		(id_csr_src)
 );
 
 wire 						arb_arvalid;

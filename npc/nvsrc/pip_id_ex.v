@@ -14,6 +14,10 @@ module pip_id_ex(
 
 	input 							  id_mem_re,
 	input 							  id_mem_we,
+	input 							  id_reg_we,
+	input 							  id_csr_we1,
+	input 							  id_csr_we2,
+
 	input 		[2:0] 				  id_ls_type,
 	input 		[2:0] 				  id_wb_sel,
 
@@ -50,6 +54,10 @@ module pip_id_ex(
 
 	output reg						  ex_mem_re,
 	output reg 						  ex_mem_we,
+	output reg 						  ex_reg_we,
+	output reg 						  ex_csr_we1,
+	output reg 						  ex_csr_we2,
+
 	output reg	[2:0] 				  ex_ls_type,
 	output reg	[2:0] 				  ex_wb_sel,
 
@@ -85,6 +93,9 @@ always@(posedge clk or negedge rst_n) begin
 		ex_alu_src2_sel <= 2'b0;
 		ex_mem_re 		<= 1'b0;
 		ex_mem_we 		<= 1'b0;
+		ex_reg_we 		<= 1'b0;
+		ex_csr_we1 		<= 1'b0;
+		ex_csr_we2 		<= 1'b0;
 		ex_ls_type 		<= 3'b0;
 		ex_wb_sel 		<= 3'b111;
 		ex_jal 			<= 1'b0;
@@ -112,6 +123,9 @@ always@(posedge clk or negedge rst_n) begin
 		ex_alu_src2_sel <= 2'b0;
 		ex_mem_re 		<= 1'b0;
 		ex_mem_we 		<= 1'b0;
+		ex_reg_we 		<= 1'b0;
+		ex_csr_we1 		<= 1'b0;
+		ex_csr_we2 		<= 1'b0;
 		ex_ls_type 		<= 3'b0;
 		ex_wb_sel 		<= 3'b111;
 		ex_jal 			<= 1'b0;
@@ -139,6 +153,9 @@ always@(posedge clk or negedge rst_n) begin
 		ex_alu_src2_sel <= id_alu_src2_sel;
 		ex_mem_re 		<= id_mem_re;
 		ex_mem_we 		<= id_mem_we;
+		ex_reg_we 		<= id_reg_we;
+		ex_csr_we1 		<= id_csr_we1;
+		ex_csr_we2 		<= id_csr_we2;
 		ex_ls_type 		<= id_ls_type;
 		ex_wb_sel 		<= id_wb_sel;
 		ex_jal 			<= id_jal;

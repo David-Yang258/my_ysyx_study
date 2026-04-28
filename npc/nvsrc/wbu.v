@@ -14,6 +14,10 @@ module wbu(
 
 	input  [`BUS_DATA_WIDTH-1:0] 	  mem_rdata,
 
+	input 							  lsu_reg_we,
+	input 							  lsu_csr_we1,
+	input 							  lsu_csr_we2,
+
 	/*verilator lint_off UNUSEDSIGNAL*/
 	input 						 	  stall,
 
@@ -47,9 +51,9 @@ always@(posedge clk or negedge rst_n)begin
 		final_reg_we  <= 1'b0;
 		case(wb_sel)
 			`ALU_TO_REG: begin
-				final_rd_waddr <= rd_waddr;
-				final_rd_wdata <= rd_wdata;
-				final_reg_we   <= 1'b1;
+				final_rd_waddr   <= rd_waddr;
+				final_rd_wdata   <= rd_wdata;
+				final_reg_we     <= lsu_reg_we;
 			end
 			`ALU_TO_MEM: begin
 			end
@@ -58,15 +62,15 @@ always@(posedge clk or negedge rst_n)begin
 			`ALU_TO_CSR:begin
 				final_csr_waddr1 <= csr_waddr1;
 				final_csr_wdata1 <= csr_wdata1;
-				final_csr_we1    <= 1'b1;
+				final_csr_we1    <= lsu_csr_we1;
 			end
 			`ALU_TO_CSR_PC:begin
 				final_csr_waddr1 <= csr_waddr1;
 				final_csr_waddr2 <= csr_waddr2;
 				final_csr_wdata1 <= csr_wdata1;
 				final_csr_wdata2 <= csr_wdata2;
-				final_csr_we1    <= 1'b1;
-				final_csr_we2    <= 1'b1;
+				final_csr_we1    <= lsu_csr_we1;
+				final_csr_we2    <= lsu_csr_we2;
 				//csr_jmp_set 	 <= branch_taken;
 				//csr_jmp_addr   <= branch_addr;
 			end
@@ -75,18 +79,18 @@ always@(posedge clk or negedge rst_n)begin
 				final_csr_wdata1 <= csr_wdata1;
 				final_rd_waddr   <= rd_waddr;
 				final_rd_wdata   <= rd_wdata;
-				final_csr_we1    <= 1'b1;
-				final_reg_we     <= 1'b1;
+				final_csr_we1    <= lsu_csr_we1;
+				final_reg_we     <= lsu_reg_we;
 			end
 			`ALU_TO_PC_REG:begin
-				final_rd_waddr  <= rd_waddr;
-				final_rd_wdata  <= rd_wdata;
-				final_reg_we    <= 1'b1;
+				final_rd_waddr   <= rd_waddr;
+				final_rd_wdata   <= rd_wdata;
+				final_reg_we     <= lsu_reg_we;
 			end
 			`MEM_TO_REG:begin
-				final_rd_waddr <= rd_waddr;
-				final_rd_wdata <= mem_rdata;
-				final_reg_we   <= 1'b1;
+				final_rd_waddr   <= rd_waddr;
+				final_rd_wdata   <= mem_rdata;
+				final_reg_we     <= lsu_reg_we;
 			end
 			default:; 
 		endcase
