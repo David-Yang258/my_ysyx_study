@@ -26,9 +26,6 @@
 `include "bus_define.vh"
 module idu (
 	input 		[`BUS_DATA_WIDTH-1:0] 	inst,
-	input 								i_ready,
-	output     	 						o_valid,
-	output reg 						    bus_error,
 
    	output reg 	[`BUS_DATA_WIDTH-1:0] 	imm,
 
@@ -43,8 +40,8 @@ module idu (
 	output reg  [5:0] 					alu_op,
 	output reg 	[1:0]					alu_src2_sel,
 
-	//output reg 							mem_we,
 	output reg 							mem_re,
+	output reg 							mem_we,
 
 	output reg  [2:0] 					ls_type,
 
@@ -57,16 +54,13 @@ module idu (
 
 	output reg  [3:0] 					branch_type,
 
-	//output reg 							csr_we1,
-	//output reg 							csr_we2,
 	output reg   						csr_flag,
 
 	output reg 							ecall,
 	output reg 							Ebreak,
 	output reg 							mret,
 
-	input 								ifu_valid,
-	output  							idu_ready
+	output reg 							predict_taken
 );
 `include "opcode.vh"
 `include "alu.vh"
@@ -110,23 +104,17 @@ assign immS   = {{20{inst[31]}},{inst[31:25]},{inst[11:7]}};
 assign immJ   = {{11{inst[31]}},{inst[31]},{inst[19:12]},{inst[20]},{inst[30:21]},1'b0};
 assign Efunct12 = inst[31:20];
 
-assign idu_ready = i_ready;
-assign o_valid = ifu_valid;
-
 always@(*) begin
 	wb_sel = `ALU_TO_REG;
 	alu_op = 6'b0;
 	mem_re = 1'b0;
-	//mem_we = 1'b0;
 	branch = 1'b0;
 	jal    = 1'b0;
 	jalr   = 1'b0;
 	auipc  = 1'b0;
-	//csr_we1= 1'b0;
-	//csr_we2= 1'b0;
 	csr_flag = 1'b0;
 	ecall  = 1'b0;
-	Ebreak = 1'b0;
+	Ebreak 		= 1'b0;
 	mret   = 1'b0;
 	
 	casez(opcode)
@@ -185,7 +173,7 @@ always@(*) begin
 					branch_type = `BRANCH_GEU;
 					alu_op = `ALU_SLTU;
 				end
-				default: bus_error = 1'b1;
+				default:; 
 			endcase
 			branch = 1'b1;
 		end
@@ -200,7 +188,7 @@ always@(*) begin
 				3'b010: ls_type = `LS_TYPE_W;
 				3'b100: ls_type = `LS_TYPE_BU;
 				3'b101: ls_type = `LS_TYPE_HU;
-				default: bus_error = 1'b1;
+				default:; 
 			endcase
 			mem_re = 1'b1;
 		end
@@ -213,9 +201,9 @@ always@(*) begin
 				3'b000: ls_type = `LS_TYPE_B;
 				3'b001: ls_type = `LS_TYPE_H;
 				3'b010: ls_type = `LS_TYPE_W;
-				default bus_error = 1'b1;
+				default: ; 
 			endcase
-			//mem_we = 1'b1;
+			mem_we = 1'b1;
 		end
 		OPCODE_IR_TYPE:begin
 			imm = immI; rs1 = rs1_dec; 							rd = rd_dec;
@@ -233,7 +221,7 @@ always@(*) begin
 					if(funct7 == 7'b0) alu_op = `ALU_SRL;
 					else alu_op = `ALU_SRA;
 				end
-				default: bus_error = 1'b1;
+				default:; 
 			endcase
 		end
 		OPCODE_R_TYPE: begin
@@ -255,23 +243,20 @@ always@(*) begin
 				end
 				3'b110:alu_op = `ALU_OR;
 				3'b111:alu_op = `ALU_AND;
-				default: bus_error = 1'b1;
+				default:; 
 			endcase
 		end
 		OPCODE_C_TYPE:begin
 			imm = immI;	rs1 = rs1_dec; 							rd = rd_dec;
 			alu_src2_sel = `ALU_SRC2_CSR;
-			//csr_we1= 1'b1;
 			csr_flag = 1'b1;
 			case(funct3)
 				3'b000: begin
 					if(Efunct12 == 12'h000) begin
-						//csr_we2    = 1'b1;
 						rs1        = MCAUSE_REG;
 						csr_raddr  = CSR_MTVEC[11:0];
 						csr_waddr1 = CSR_MEPC[11:0];
 						csr_waddr2 = CSR_MCAUSE[11:0];
-						//branch     = 1'b1;
 						wb_sel     = `ALU_TO_CSR_PC;
 						ecall 	   = 1'b1;
 					end
@@ -303,14 +288,21 @@ always@(*) begin
 						alu_op 	   = `ALU_ANDN;
 						wb_sel = `ALU_TO_CSR_REG;
 				end
-				default: bus_error = 1'b1;
+				default:; 
 			endcase
 		end
-		default: bus_error = 1'b1;
+		default:; 
 	endcase
 	case(inst)
 		EBREAK: ;//ebreak();
 		default:;
 	endcase
 end
+
+always @(*) begin
+	predict_taken = 1'b0;
+	//whenever there is a possible jmp, predict it as happening
+	if(branch || jal || jalr) predict_taken = 1'b1;
+end
+
 endmodule

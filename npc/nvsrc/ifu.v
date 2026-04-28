@@ -14,10 +14,7 @@ module ifu(
 	input  		[`BUS_DATA_WIDTH-1:0] branch_addr,
 	input 							  stall,
 
-
-	input 							  i_ready,
-	output reg  					  o_valid,
-
+	output reg 						  ifu_stall_rqst,
 
 	output reg  	 				  arvalid,
 	output reg	[`MEM_ADDR_WIDTH-1:0] araddr,
@@ -44,8 +41,7 @@ module ifu(
 
 	output reg 	[`BUS_DATA_WIDTH-1:0] pc,
 	output reg 	[`BUS_DATA_WIDTH-1:0] inst,
-	output      [2:0] 				  o_ifu_state,
-	output reg						  bus_error
+	output      [2:0] 				  o_ifu_state
 );
 reg [2:0]  				  ifu_state; 		 //IFU state
 
@@ -55,8 +51,8 @@ reg  					  need2fetch;
 localparam IFU_IDLE 		= 3'b000;//IDLE
 localparam IFU_REQ 			= 3'b001;
 localparam IFU_GET_INST     = 3'b010;
-localparam IFU_WAIT_WBU 	= 3'b011;//Waiting for WBU to write
-localparam IFU_WRITE_BACK 	= 3'b100;//Waiting for WBU to write
+//localparam IFU_WAIT_WBU 	= 3'b011;//Waiting for WBU to write
+//localparam IFU_WRITE_BACK 	= 3'b100;//Waiting for WBU to write
 localparam IFU_JMP			= 3'b101;//Handle branch if there is one 
 
 assign o_ifu_state = ifu_state;
@@ -74,9 +70,7 @@ always@(posedge clk or negedge rst_n) begin
 		ifu_state <= IFU_IDLE; 		//IDLE
 		inst 	  <= 32'h00000013;  //NOP
 		arvalid   <= `MEM_CMD_IDLE; //IDLE cmd to mem
-		bus_error <= 1'b0;
  		need2fetch<= 1'b1;
-		o_valid   <= 1'b0;
 	end
 	else begin
 		/* 
@@ -87,27 +81,30 @@ always@(posedge clk or negedge rst_n) begin
 		case(ifu_state)
 			IFU_IDLE: begin
 				if(!stall && need2fetch) begin
-					araddr 	  <= pc;
-					arvalid   <= `MEM_CMD_READ;
-					rready    <= 1'b1;
-					ifu_state <= IFU_REQ;
-					need2fetch<= 1'b0;
+					araddr 	 		<= pc;
+					arvalid   		<= `MEM_CMD_READ;
+					rready    		<= 1'b1;
+					ifu_state 		<= IFU_REQ;
+					ifu_stall_rqst  <= 1'b1;
+					need2fetch 		<= 1'b0;
 				end
 			end
 			IFU_REQ: begin
 				if(arready) begin 
-					arvalid   <= `MEM_CMD_IDLE;
-					ifu_state <= IFU_GET_INST;
+					arvalid   		<= `MEM_CMD_IDLE;
+					ifu_state 		<= IFU_GET_INST;
 				end
 			end
 			IFU_GET_INST: begin
 				if(rvalid)begin
-					inst 	  <= rdata;
-					rready    <= 1'b0;
-					o_valid   <= 1'b1;
-					ifu_state <= IFU_WAIT_WBU;
+					inst 	  		<= rdata;
+					rready    		<= 1'b0;
+					ifu_state 		<= IFU_JMP;
+					ifu_stall_rqst  <= 1'b0;
+					//ifu_state <= IFU_WAIT_WBU;
 				end
 			end
+			/*
 			IFU_WAIT_WBU: begin
 				if(!stall && i_ready) begin
 					ifu_state <= IFU_WRITE_BACK;
@@ -117,6 +114,7 @@ always@(posedge clk or negedge rst_n) begin
 			IFU_WRITE_BACK:begin
 				if(i_ready) ifu_state <= IFU_JMP;
 			end
+			*/
 			IFU_JMP:begin
 				if(branch_happen) begin
 					pc <= branch_addr;
@@ -125,7 +123,7 @@ always@(posedge clk or negedge rst_n) begin
 				need2fetch <= 1'b1;
 				if(!stall) ifu_state  <= IFU_IDLE;
 			end
-			default: bus_error <= 1'b1;
+			default:; 
 		endcase;
 	end
 end

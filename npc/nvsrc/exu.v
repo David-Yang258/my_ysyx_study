@@ -19,12 +19,12 @@ module exu (
 
 	input 								csr_flag,
 
-	input 								idu_valid,
-	input 								i_ready,
-	output wire 						o_valid,
-	output reg 							bus_error,
-	output 								exu_ready,
-	
+	input 		[`BUS_DATA_WIDTH-1:0]   mem_loaded_res,
+	input 		[`BUS_DATA_WIDTH-1:0]   final_wb_res,
+
+	input 		[1:0] 					forward_a,
+	input 		[1:0] 					forward_b,
+
 	output  							branch_taken,
 	output 	    [`BUS_DATA_WIDTH-1:0]   branch_addr,
 	output   	[`BUS_DATA_WIDTH-1:0]  	alu_result,
@@ -37,21 +37,19 @@ module exu (
 `include "alu.vh"
 
 wire  [`BUS_DATA_WIDTH-1:0] op1;
-reg   [`BUS_DATA_WIDTH-1:0] op2;
+wire  [`BUS_DATA_WIDTH-1:0] op2;
 
-assign op1 = (jalr || jal || auipc) ? pc : rs1_src;
-assign o_valid   = idu_valid;
-assign exu_ready = i_ready; 
+//Forward passing
+assign op1 = (forward_a == 2'b01) ? mem_loaded_res :
+			 (forward_a == 2'b10) ? final_wb_res   :
+			 (jalr || jal || auipc) ? pc : rs1_src ;
 
-always@(*)begin
-	case(alu_src2_sel)
-		`ALU_SRC2_RS2: op2 = rs2_src;
-		`ALU_SRC2_IMM: op2 = imm;
-		`ALU_SRC2_CSR: op2 = csr_src;
-		`ALU_SRC2_PC4: op2 = 32'd4;
-		default: bus_error = 1'b1;
-	endcase
-end
+assign op2 = (forward_b == 2'b01) ? mem_loaded_res     :
+			 (forward_b == 2'b10) ? final_wb_res   	   :
+			 (alu_src2_sel == `ALU_SRC2_RS2) ? rs2_src :
+			 (alu_src2_sel == `ALU_SRC2_IMM) ? imm     :
+			 (alu_src2_sel == `ALU_SRC2_CSR) ? csr_src :
+			 (alu_src2_sel == `ALU_SRC2_PC4) ? 32'd4 : 32'b0;
 
 alu inst_alu(
 	.op1 	(op1),
