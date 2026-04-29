@@ -5,11 +5,12 @@ module top(
 	output [`BUS_DATA_WIDTH-1:0] pc,
 	output [`BUS_DATA_WIDTH-1:0] inst,
 	output [2:0] o_ifu_state,
-	output Ebreak
+	output Ebreak,
+	output [`BUS_DATA_WIDTH-1:0] wbu_diff_pc,
+	output [`BUS_DATA_WIDTH-1:0] wbu_diff_inst
 );
 
-wire 						stall;
-wire [`BUS_DATA_WIDTH-1:0]  jmp_addr;
+//wire [`BUS_DATA_WIDTH-1:0]  jmp_addr;
 
 wire [`BUS_DATA_WIDTH-1:0]  instruction;
 
@@ -37,6 +38,8 @@ wire [`BUS_DATA_WIDTH-1:0] 	id_imm;
 wire [`REG_ADDR_WIDTH-1:0] 	id_rd_addr;
 wire [`REG_ADDR_WIDTH-1:0] 	id_rs1_addr;
 wire [`REG_ADDR_WIDTH-1:0] 	id_rs2_addr;
+wire 						id_rs1_en;
+wire 						id_rs2_en;
 wire [`CSR_ADDR_WIDTH-1:0] 	id_csr_raddr;
 wire [`CSR_ADDR_WIDTH-1:0] 	id_csr_waddr1;
 wire [`CSR_ADDR_WIDTH-1:0] 	id_csr_waddr2;
@@ -67,14 +70,12 @@ wire [`BUS_DATA_WIDTH-1:0] 	final_csr_wdata2;
 
 wire ifu_stall_rqst, lsu_stall_rqst;
 
-assign stall = ifu_stall_rqst | lsu_stall_rqst;
-
 assign inst = instruction;
 
+wire 						ifu_inst_valid;
 wire 						ifu_arvalid;
 wire [`MEM_ADDR_WIDTH-1:0] 	ifu_araddr;
 wire 						ifu_arready;
-
 wire [`BUS_DATA_WIDTH-1:0] 	ifu_rdata;
 wire 						ifu_rvalid;
 wire [1:0] 					ifu_rresp;
@@ -142,11 +143,13 @@ ifu inst_ifu(
 
 	.pc 			(pc),
 	.inst 			(instruction),
+	.inst_valid 	(ifu_inst_valid),
 	.o_ifu_state 	(o_ifu_state)
 );
 
 wire [`BUS_DATA_WIDTH-1:0] if_id_pc;
 wire [`BUS_DATA_WIDTH-1:0] if_id_inst;
+wire 					   if_id_inst_valid;
 /*verilator lint_off UNUSEDSIGNAL*/
 wire [`REG_ADDR_WIDTH-1:0] if_id_rd; 
 /*verilator lint_on  UNUSEDSIGNAL*/
@@ -157,6 +160,7 @@ pip_if_id inst_pip_if_id(
 	.clk 			(clk 		),
 	.rst_n 			(rst_n 		),
 	.if_inst 		(instruction),
+	.if_inst_valid 	(ifu_inst_valid),
 	.if_pc 			(pc 		),
 	.stall 			(hazard_stall_if_id),
 	.flush 			(hazard_flush_if_id),
@@ -164,7 +168,8 @@ pip_if_id inst_pip_if_id(
 	.if_id_rs1 		(if_id_rs1 	),
 	.if_id_rs2 		(if_id_rs2 	),
 	.if_id_pc 		(if_id_pc 	),
-	.if_id_inst 	(if_id_inst )
+	.if_id_inst 	(if_id_inst ),
+	.if_id_inst_valid(if_id_inst_valid)
 );
 
 /*verilator lint_off UNUSEDSIGNAL*/
@@ -172,12 +177,14 @@ wire 				id_predict_taken;
 /*verilator lint_on  UNUSEDSIGNAL*/
 
 idu inst_idu(
-	.inst 			(if_id_inst ),
+	.inst 			(if_id_inst),
 
 	.imm 			(id_imm),
 	.rd 			(id_rd_addr),
 	.rs1 			(id_rs1_addr),
 	.rs2 			(id_rs2_addr),
+	.rs1_en 		(id_rs1_en),
+	.rs2_en 		(id_rs2_en),
 	.csr_raddr 		(id_csr_raddr),
 	.csr_waddr1 	(id_csr_waddr1),
 	.csr_waddr2 	(id_csr_waddr2),
@@ -208,6 +215,8 @@ wire [`BUS_DATA_WIDTH-1:0] 	id_ex_rs1_src;
 wire [`BUS_DATA_WIDTH-1:0] 	id_ex_rs2_src;
 wire [`BUS_DATA_WIDTH-1:0] 	id_ex_csr_src;
 wire [`BUS_DATA_WIDTH-1:0] 	id_ex_pc;
+wire [`BUS_DATA_WIDTH-1:0] 	id_ex_inst;
+wire 						id_ex_inst_valid;
 wire [5:0] 				   	id_ex_alu_op;
 wire [1:0] 				   	id_ex_alu_src2_sel;
 
@@ -231,6 +240,8 @@ wire						id_ex_csr_flag;
 wire [`REG_ADDR_WIDTH-1:0] 	id_ex_rd_addr;
 wire [`REG_ADDR_WIDTH-1:0] 	id_ex_rs1_addr;
 wire [`REG_ADDR_WIDTH-1:0] 	id_ex_rs2_addr;
+wire 						id_ex_rs1_en;
+wire 						id_ex_rs2_en;
 
 /*verilator lint_off UNUSEDSIGNAL*/
 wire [`CSR_ADDR_WIDTH-1:0] 	id_ex_csr_raddr;
@@ -251,6 +262,8 @@ pip_id_ex inst_id_ex(
 	.id_rd 			(id_rd_addr),
 	.id_rs1 		(id_rs1_addr),
 	.id_rs2 		(id_rs2_addr),
+	.id_rs1_en 		(id_rs1_en),
+	.id_rs2_en 		(id_rs2_en),
 
 	.id_csr_raddr 	(id_csr_raddr),
 	.id_csr_waddr1 	(id_csr_waddr1),
@@ -261,6 +274,8 @@ pip_id_ex inst_id_ex(
 	.id_csr_src 	(id_csr_src),
 
 	.id_pc 			(if_id_pc),
+	.id_inst 		(if_id_inst),
+	.id_inst_valid 	(if_id_inst_valid),
 
 	.id_alu_op 		(id_alu_op),
 	.id_alu_src2_sel(id_alu_src2_sel),
@@ -290,6 +305,8 @@ pip_id_ex inst_id_ex(
 	.ex_csr_src 	(id_ex_csr_src),
 
 	.ex_pc 			(id_ex_pc),
+	.ex_inst 		(id_ex_inst),
+	.ex_inst_valid 	(id_ex_inst_valid),
 	.ex_alu_op 		(id_ex_alu_op),
 	.ex_alu_src2_sel(id_ex_alu_src2_sel),
 
@@ -313,6 +330,8 @@ pip_id_ex inst_id_ex(
 	.ex_rd 			(id_ex_rd_addr),
 	.ex_rs1 		(id_ex_rs1_addr),
 	.ex_rs2 		(id_ex_rs2_addr),
+	.ex_rs1_en 		(id_ex_rs1_en),
+	.ex_rs2_en 		(id_ex_rs2_en),
 
 	.ex_csr_raddr 	(id_ex_csr_raddr),
 	.ex_csr_waddr1 	(id_ex_csr_waddr1),
@@ -321,8 +340,11 @@ pip_id_ex inst_id_ex(
 
 wire [1:0] 					hazard_forward_a;
 wire [1:0] 					hazard_forward_b;
-wire [`BUS_DATA_WIDTH-1:0] 	mem_loaded_res;
-wire [`BUS_DATA_WIDTH-1:0] 	final_wb_res;
+wire [`BUS_DATA_WIDTH-1:0] 	mem_forward_data;
+wire [`BUS_DATA_WIDTH-1:0] 	wb_forward_data;
+assign mem_forward_data = ex_lsu_rd_wdata;
+`include "alu.vh"
+assign wb_forward_data   = (lsu_wbu_wb_sel == `MEM_TO_REG) ? lsu_wbu_mem_rdata : lsu_wbu_rd_wdata;
 
 exu inst_exu(
 	.imm 			(id_ex_imm),
@@ -348,9 +370,9 @@ exu inst_exu(
 
 	.alu_result 	(exu_alu_result),
 
-	.mem_loaded_res (mem_loaded_res),
-	.final_wb_res 	(final_wb_res),
-
+	.mem_loaded_res (mem_forward_data),
+	.final_wb_res 	(wb_forward_data),
+ 
 	.forward_a 		(hazard_forward_a),
 	.forward_b 		(hazard_forward_b),
 
@@ -380,10 +402,18 @@ wire 						ex_lsu_reg_we;
 wire 						ex_lsu_csr_we1;
 wire 						ex_lsu_csr_we2;
 
+wire [`BUS_DATA_WIDTH-1:0]  ex_lsu_pc;
+wire [`BUS_DATA_WIDTH-1:0]  ex_lsu_inst;
+wire 						ex_lsu_inst_valid;
+
 pip_ex_lsu inst_pip_ex_lsu(
 	.clk 			(clk),
 	.rst_n 			(rst_n),
 	
+	.ex_pc 			(id_ex_pc),
+	.ex_inst 		(id_ex_inst),
+	.ex_inst_valid 	(id_ex_inst_valid),
+
 	.ex_rd_wdata 	(exu_rd_wdata),
 	.ex_csr_wdata1  (exu_csr_wdata1),
 	.ex_csr_wdata2  (exu_csr_wdata2),
@@ -406,6 +436,10 @@ pip_ex_lsu inst_pip_ex_lsu(
 	.ex_wb_sel 		(id_ex_wb_sel),
 
 	.stall 			(hazard_stall_ex_mem),
+
+	.lsu_pc 		(ex_lsu_pc),
+	.lsu_inst 		(ex_lsu_inst),
+	.lsu_inst_valid (ex_lsu_inst_valid),
 
 	.lsu_rd_wdata 	(ex_lsu_rd_wdata),
 	.lsu_csr_wdata1 (ex_lsu_csr_wdata1),
@@ -468,8 +502,6 @@ lsu inst_lsu(
 	.mem_rdata 		(lsu_mem_rdata),
 	.lsu_stall_rqst (lsu_stall_rqst),
 
-	.stall 			(stall),
-	
 	.arvalid 		(lsu_arvalid),
 	.araddr 		(lsu_araddr),
 	.arready 		(lsu_arready),
@@ -493,7 +525,6 @@ lsu inst_lsu(
 	.bready 		(lsu_bready)
 );
 
-assign mem_loaded_res = lsu_mem_rdata;
 
 wire [2:0] 					lsu_wbu_wb_sel;
 	
@@ -511,10 +542,18 @@ wire 						lsu_wbu_reg_we;
 wire 						lsu_wbu_csr_we1;
 wire 						lsu_wbu_csr_we2;
 
+wire [`BUS_DATA_WIDTH-1:0] 	lsu_wbu_pc;
+wire [`BUS_DATA_WIDTH-1:0] 	lsu_wbu_inst;
+wire 						lsu_wbu_inst_valid;
+
 pip_lsu_wbu inst_pip_lsu_wbu(
 	.clk 			(clk),
 	.rst_n 			(rst_n),
 	.stall 			(hazard_stall_mem_wb),
+
+	.lsu_pc 		(ex_lsu_pc),
+	.lsu_inst 		(ex_lsu_inst),
+	.lsu_inst_valid (ex_lsu_inst_valid),
 
 	.lsu_wb_sel 	(ex_lsu_wb_sel),
 	
@@ -531,6 +570,10 @@ pip_lsu_wbu inst_pip_lsu_wbu(
 	.lsu_reg_we 	(ex_lsu_reg_we),
 	.lsu_csr_we1 	(ex_lsu_csr_we1),
 	.lsu_csr_we2 	(ex_lsu_csr_we2),
+
+	.wbu_pc 		(lsu_wbu_pc),
+	.wbu_inst 		(lsu_wbu_inst),
+	.wbu_inst_valid (lsu_wbu_inst_valid),
 
 	.wbu_wb_sel 	(lsu_wbu_wb_sel),
 	
@@ -549,13 +592,15 @@ pip_lsu_wbu inst_pip_lsu_wbu(
 	.wbu_csr_we2 	(lsu_wbu_csr_we2)
 );
 
-assign final_wb_res = lsu_wbu_rd_wdata;
-
 wbu inst_wbu(
 	.clk 			(clk),
 	.rst_n 			(rst_n),
 
 	.wb_sel 		(lsu_wbu_wb_sel),
+
+	.wbu_pc 		(lsu_wbu_pc),
+	.wbu_inst 		(lsu_wbu_inst),
+	.wbu_inst_valid (lsu_wbu_inst_valid),
 
 	.rd_waddr 		(lsu_wbu_rd),
 	.csr_waddr1 	(lsu_wbu_csr_waddr1),
@@ -571,8 +616,6 @@ wbu inst_wbu(
 	.lsu_csr_we1 	(lsu_wbu_csr_we1),
 	.lsu_csr_we2 	(lsu_wbu_csr_we2),
 
-	.stall 			(stall),
-
 	.final_rd_waddr (final_rd_waddr),
 	.final_csr_waddr1(final_csr_waddr1),
 	.final_csr_waddr2(final_csr_waddr2),
@@ -581,7 +624,9 @@ wbu inst_wbu(
 	.final_csr_wdata2(final_csr_wdata2),
 	.final_csr_we1 	(final_csr_we1),
 	.final_csr_we2 	(final_csr_we2),
-	.final_reg_we 	(final_reg_we)
+	.final_reg_we 	(final_reg_we),
+	.wbu_diff_pc 	(wbu_diff_pc),
+	.wbu_diff_inst 	(wbu_diff_inst)
 );
 
 
@@ -593,6 +638,8 @@ hazard_unit inst_hazard_unit(
 	.rs1_addr_ex 	(id_ex_rs1_addr),
 	.rs2_addr_ex 	(id_ex_rs2_addr),
 	.rd_addr_ex 	(id_ex_rd_addr),
+	.rs1_ren_ex 	(id_ex_rs1_en),
+	.rs2_ren_ex 	(id_ex_rs2_en),
 	.mem_re_ex 		(id_ex_mem_re),
 
 	.branch_taken_ex(exu_branch_taken),

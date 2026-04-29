@@ -11,9 +11,11 @@
 
 #define MAX_INST_TO_PRINT 20
 #define NR_GPR 16
+#define wave
 
 
 extern Vtop* top;
+extern VerilatedVcdC* tfp;
 extern VerilatedContext *contextp;
 static word_t old_pc = 0;
 
@@ -25,7 +27,14 @@ void iringbuf_display();
 void trace_func_ret(paddr_t);
 void difftest_step(vaddr_t, vaddr_t);
 
+
 CPU_state cpu = {};
+
+extern "C" void difftest_wbu_step(int wbu_pc){
+	cpu.pc = top->rootp->top__DOT__id_ex_pc;
+	printf("wbu_diff_pc: %x\n", wbu_pc);
+	difftest_step(wbu_pc, cpu.pc);	
+}
 
 void init_diff_cpu(){
 	cpu.pc = RESET_VECTOR;
@@ -46,49 +55,58 @@ static void exec_once(){
 	//printf("EXU: jal = %x\n", top->rootp->top__DOT__jal);
 	//printf("LSU: lsu_valid = %x\n", top->rootp->top__DOT__inst_lsu__DOT__o_valid);
 #ifdef DEBUGING
-	printf("IFU: pc   = %x\n", top->pc);
-	printf("IFU: inst = %x\n", top->inst);
+printf("IFU: pc   = %x\n", top->pc);
+printf("IFU: inst = %x\n", top->inst);
 #endif
 #ifdef ITRACE_COND
-	trace_inst2ringbuf(top->pc, top->inst);
+	//trace_inst2ringbuf(top->rootp->top__DOT__lsu_wbu_pc, top->rootp->top__DOT__lsu_wbu_inst);
+	if(top->wbu_diff_pc != 0 && top->wbu_diff_inst != 0)trace_inst2ringbuf(top->wbu_diff_pc, top->wbu_diff_inst);
 #endif
 #ifdef FTRACE_COND
 	if(top->inst == 0x00008067)trace_func_ret(top->pc);
 #endif
 	do{
 #ifdef DEBUGING
-		printf("IFU: ifu_state = %x\n", top->rootp->top__DOT__inst_ifu__DOT__ifu_state);
-		printf("MEM: mem_state = %x\n", top->rootp->top__DOT__inst_mem__DOT__mem_state);
-		printf("LSU: lsu_state = %x\n", top->rootp->top__DOT__inst_lsu__DOT__mem_state);
-		printf("MEM: mem_aweady = %x\n", top->rootp->top__DOT__mem_awready);
-		printf("MEM: mem_bvalid = %x\n", top->rootp->top__DOT__mem_bvalid);
-		printf("LSU: lsu_wpcl= %x\n", top->rootp->top__DOT__lsu_wcpl);
-		printf("LSU: lsu_rpcl= %x\n", top->rootp->top__DOT__lsu_rcpl);
+printf("IFU: ifu_state = %x\n", top->rootp->top__DOT__inst_ifu__DOT__ifu_state);
+printf("MEM: mem_state = %x\n", top->rootp->top__DOT__inst_mem__DOT__mem_state);
+printf("LSU: lsu_state = %x\n", top->rootp->top__DOT__inst_lsu__DOT__mem_state);
+printf("MEM: mem_aweady = %x\n", top->rootp->top__DOT__mem_awready);
+printf("MEM: mem_bvalid = %x\n", top->rootp->top__DOT__mem_bvalid);
+printf("LSU: lsu_wpcl= %x\n", top->rootp->top__DOT__lsu_wcpl);
+printf("LSU: lsu_rpcl= %x\n", top->rootp->top__DOT__lsu_rcpl);
 
-		printf("MEM: lsu_awaddr = %x\n",top->rootp->top__DOT__lsu_awaddr);
-		printf("LSU: lsu_awvalid = %x\n",top->rootp->top__DOT__lsu_awvalid);
-		//printf("LSU: lsu_awready = %x\n",top->rootp->top__DOT__lsu_awready);
+printf("MEM: lsu_awaddr = %x\n",top->rootp->top__DOT__lsu_awaddr);
+printf("LSU: lsu_awvalid = %x\n",top->rootp->top__DOT__lsu_awvalid);
+//printf("LSU: lsu_awready = %x\n",top->rootp->top__DOT__lsu_awready);
 
-		printf("LSU: lsu_arvalid = %x\n",top->rootp->top__DOT__lsu_arvalid);
-		printf("IFU: ifu_arvalid = %x\n",top->rootp->top__DOT__ifu_arvalid);
-		printf("MEM: lsu_araddr = %x\n",top->rootp->top__DOT__lsu_araddr);
-		printf("MEM: lsu_wdata = %x\n",top->rootp->top__DOT__lsu_wdata);
-		printf("MEM: lsu_rdata = %x\n",top->rootp->top__DOT__mem_rdata);
-		//printf("REG: final_reg_we = %x\n",top->rootp->top__DOT__final_reg_we);
-		//printf("REG: final_rd_wdata = %x\n",top->rootp->top__DOT__final_rd_wdata);
-		printf("WBU: wbu_ready = %x\n", top->rootp->top__DOT__wbu_ready);
-		printf("\n");
+printf("LSU: lsu_arvalid = %x\n",top->rootp->top__DOT__lsu_arvalid);
+printf("IFU: ifu_arvalid = %x\n",top->rootp->top__DOT__ifu_arvalid);
+printf("MEM: lsu_araddr = %x\n",top->rootp->top__DOT__lsu_araddr);
+printf("MEM: lsu_wdata = %x\n",top->rootp->top__DOT__lsu_wdata);
+printf("MEM: lsu_rdata = %x\n",top->rootp->top__DOT__mem_rdata);
+//printf("REG: final_reg_we = %x\n",top->rootp->top__DOT__final_reg_we);
+//printf("REG: final_rd_wdata = %x\n",top->rootp->top__DOT__final_rd_wdata);
+printf("WBU: wbu_ready = %x\n", top->rootp->top__DOT__wbu_ready);
+printf("\n");
 #endif
 		top->clk = !top->clk;
 		top->eval();
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
 		top->clk = !top->clk;
 		top->eval();
-	}while(top->o_ifu_state != 3);
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
+	}while(top->rootp->top__DOT__lsu_wbu_inst_valid != 1);
 	//top->eval();
 	//top->clk = !top->clk;
 	//top->eval();
 	//top->clk = !top->clk;
-	cpu.pc = top->pc;
+	cpu.pc = top->rootp->top__DOT__id_ex_pc;
 	for(int i = 0;i < NR_GPR;i++){
 		cpu.gpr[i] = top->rootp->top__DOT__inst_gpr__DOT__rf[i];
 	}

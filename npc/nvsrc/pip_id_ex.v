@@ -8,6 +8,8 @@ module pip_id_ex(
 	input 		[`BUS_DATA_WIDTH-1:0] id_rs2_src,
 	input 		[`BUS_DATA_WIDTH-1:0] id_csr_src,
 	input 		[`BUS_DATA_WIDTH-1:0] id_pc,
+	input 		[`BUS_DATA_WIDTH-1:0] id_inst,
+	input 							  id_inst_valid,
 	
 	input 		[5:0] 				  id_alu_op,
 	input 		[1:0] 				  id_alu_src2_sel,
@@ -34,6 +36,8 @@ module pip_id_ex(
 	input 		[`REG_ADDR_WIDTH-1:0] id_rd,
 	input 		[`REG_ADDR_WIDTH-1:0] id_rs1,
 	input 		[`REG_ADDR_WIDTH-1:0] id_rs2,
+	input 							  id_rs1_en,
+	input 							  id_rs2_en,
 
 
 	input 		[`CSR_ADDR_WIDTH-1:0] id_csr_raddr,
@@ -48,6 +52,8 @@ module pip_id_ex(
 	output reg	[`BUS_DATA_WIDTH-1:0] ex_rs2_src,
 	output reg	[`BUS_DATA_WIDTH-1:0] ex_csr_src,
 	output reg	[`BUS_DATA_WIDTH-1:0] ex_pc,
+	output reg  [`BUS_DATA_WIDTH-1:0] ex_inst, 
+	output reg 						  ex_inst_valid,
 	
 	output reg	[5:0] 				  ex_alu_op,
 	output reg	[1:0] 				  ex_alu_src2_sel,
@@ -74,6 +80,8 @@ module pip_id_ex(
 	output reg	[`REG_ADDR_WIDTH-1:0] ex_rd,
 	output reg	[`REG_ADDR_WIDTH-1:0] ex_rs1,
 	output reg	[`REG_ADDR_WIDTH-1:0] ex_rs2,
+	output reg 						  ex_rs1_en,
+	output reg 						  ex_rs2_en,
 
 
 	output reg	[`CSR_ADDR_WIDTH-1:0] ex_csr_raddr,
@@ -89,6 +97,8 @@ always@(posedge clk or negedge rst_n) begin
 		ex_rs2_src 		<= 32'b0;
 		ex_csr_src  	<= 32'b0;
 		ex_pc 			<= 32'b0;
+		ex_inst 		<= 32'b0;
+		ex_inst_valid 	<= 1'b0;
 		ex_alu_op 		<= 6'b111111;
 		ex_alu_src2_sel <= 2'b0;
 		ex_mem_re 		<= 1'b0;
@@ -109,6 +119,8 @@ always@(posedge clk or negedge rst_n) begin
 		ex_rd 			<= 5'b0;
 		ex_rs1 			<= 5'b0;
 		ex_rs2 			<= 5'b0;
+		ex_rs1_en 		<= 1'b0;
+		ex_rs2_en 		<= 1'b0;
 		ex_csr_raddr 	<= 12'b0;
 		ex_csr_waddr1 	<= 12'b0;
 		ex_csr_waddr2 	<= 12'b0;
@@ -119,6 +131,8 @@ always@(posedge clk or negedge rst_n) begin
 		ex_rs2_src 		<= 32'b0;
 		ex_csr_src  	<= 32'b0;
 		ex_pc 			<= 32'b0;
+		ex_inst 		<= 32'b0;
+		ex_inst_valid 	<= 1'b0;
 		ex_alu_op 		<= 6'b111111;
 		ex_alu_src2_sel <= 2'b0;
 		ex_mem_re 		<= 1'b0;
@@ -139,6 +153,8 @@ always@(posedge clk or negedge rst_n) begin
 		ex_rd 			<= 5'b0;
 		ex_rs1 			<= 5'b0;
 		ex_rs2 			<= 5'b0;
+		ex_rs1_en 		<= 1'b0;
+		ex_rs2_en 		<= 1'b0;
 		ex_csr_raddr 	<= 12'b0;
 		ex_csr_waddr1 	<= 12'b0;
 		ex_csr_waddr2 	<= 12'b0;
@@ -149,6 +165,8 @@ always@(posedge clk or negedge rst_n) begin
 		ex_rs2_src 		<= id_rs2_src;
 		ex_csr_src 		<= id_csr_src;
 		ex_pc 			<= id_pc;
+		ex_inst 		<= id_inst;
+		ex_inst_valid 	<= id_inst_valid;
 		ex_alu_op 		<= id_alu_op;
 		ex_alu_src2_sel <= id_alu_src2_sel;
 		ex_mem_re 		<= id_mem_re;
@@ -169,6 +187,8 @@ always@(posedge clk or negedge rst_n) begin
 		ex_rd 			<= id_rd;
 		ex_rs1 			<= id_rs1;
 		ex_rs2 			<= id_rs2;
+		ex_rs1_en 		<= id_rs1_en;
+		ex_rs2_en 		<= id_rs2_en;
 		ex_csr_raddr 	<= id_csr_raddr;
 		ex_csr_waddr1 	<= id_csr_waddr1;
 		ex_csr_waddr2 	<= id_csr_waddr2;

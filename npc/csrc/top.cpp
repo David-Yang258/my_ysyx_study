@@ -13,8 +13,11 @@
 #include "../include/utils.h"
 #include "../include/debug.h"
 
+#include "verilated_vcd_c.h"
+
 #define MAX_LINE_LEN 256
 #define MEMORY_SIZE (-1)
+#define wave
 
 static bool ebreak_stop = 0;
 
@@ -26,7 +29,7 @@ char *img_file = img_arr;
 char *diff_so_file = NULL;
 
 VerilatedContext *contextp = NULL;
-
+VerilatedVcdC* tfp = NULL;
 Vtop *top = NULL;
 
 
@@ -73,6 +76,11 @@ int main(int argc, char* argv[]){
 	contextp = new VerilatedContext;
 	contextp->commandArgs(argc, argv);
 	top = new Vtop{contextp};
+	tfp = new VerilatedVcdC;
+
+	contextp->traceEverOn(true);
+	top->trace(tfp,5);
+	tfp->open("wave.vcd");
 
 	for(int i = 1;i < argc; i++){
 		if(strcmp(argv[i], "--img") == 0 && i+1 < argc){
@@ -105,17 +113,38 @@ int main(int argc, char* argv[]){
 	top->clk  = 0;
 	top->rst_n= 1;
 	top->eval();
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
 	top->rst_n=0;
 	top->eval();
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
 	top->rst_n=1;
 	top->eval();
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
 	printf("pc = %x\n", top->pc);
 
-	while(top->o_ifu_state != 3){
+	while(top->o_ifu_state != 5){
 		top->clk = 1;
 		top->eval();
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
 		top->clk = 0;
 		top->eval();
+#ifdef wave
+tfp->dump(contextp->time());
+contextp->timeInc(1);
+#endif
+
 #ifdef DEBUGING
 		printf("IFU: arready = %x\n", top->rootp->top__DOT__mem_arready);
 		printf("arb: arready = %x\n", top->rootp->top__DOT__inst_arbiter__DOT__arb_arready);
@@ -133,6 +162,7 @@ int main(int argc, char* argv[]){
 	top->final();
 	delete top;
 	delete contextp;
+	delete tfp;
 	if(npc_state.state != NPC_END || (npc_state.state == NPC_END && npc_state.halt_ret != 0)) return -1;
 	else return 0;
 }

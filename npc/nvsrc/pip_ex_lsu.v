@@ -2,6 +2,10 @@
 module pip_ex_lsu(
 	input 								clk,
 	input 							 	rst_n,
+
+	input [`BUS_DATA_WIDTH-1:0] 		ex_pc,
+	input [`BUS_DATA_WIDTH-1:0] 		ex_inst,
+	input 								ex_inst_valid,
 	
 	input [`BUS_DATA_WIDTH-1:0]		 	ex_rd_wdata,
 	input [`BUS_DATA_WIDTH-1:0]		 	ex_csr_wdata1,
@@ -25,6 +29,10 @@ module pip_ex_lsu(
 	input [2:0] 					 	ex_wb_sel,
 
 	input 							 	stall,
+
+	output reg [`BUS_DATA_WIDTH-1:0] 	lsu_pc,
+	output reg [`BUS_DATA_WIDTH-1:0] 	lsu_inst,
+	output reg							lsu_inst_valid,
 
 	output reg [`BUS_DATA_WIDTH-1:0]	lsu_rd_wdata,
 	output reg [`BUS_DATA_WIDTH-1:0]	lsu_csr_wdata1,
@@ -51,6 +59,9 @@ module pip_ex_lsu(
 
 always@(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
+		lsu_pc 			<= 32'b0;
+		lsu_inst 		<= 32'b0;
+		lsu_inst_valid 	<= 1'b0;
 		lsu_rd_wdata 	<= 32'b0;
 		lsu_csr_wdata1 	<= 32'b0;
 		lsu_csr_wdata2  <= 32'b0;
@@ -69,6 +80,9 @@ always@(posedge clk or negedge rst_n) begin
 		lsu_csr_waddr2  <= 12'b0;
 	end
 	else if(!stall) begin
+		lsu_pc 			<= ex_pc;
+		lsu_inst 		<= ex_inst;
+		lsu_inst_valid 	<= ex_inst_valid;
 		lsu_rd_wdata 	<= ex_rd_wdata;
 		lsu_csr_wdata1 	<= ex_csr_wdata1;
 		lsu_csr_wdata2 	<= ex_csr_wdata2;

@@ -38,15 +38,18 @@ module exu (
 
 wire  [`BUS_DATA_WIDTH-1:0] op1;
 wire  [`BUS_DATA_WIDTH-1:0] op2;
+wire  [`BUS_DATA_WIDTH-1:0] real_rs1_src;
+wire  [`BUS_DATA_WIDTH-1:0] real_rs2_src;
 
+assign real_rs1_src = (forward_a == 2'b01) ? mem_loaded_res :
+				  (forward_a == 2'b10) ? final_wb_res 	: rs1_src;
+
+assign real_rs2_src = (forward_b == 2'b01) ? mem_loaded_res :
+				  (forward_b == 2'b10) ? final_wb_res 	: rs2_src;
 //Forward passing
-assign op1 = (forward_a == 2'b01) ? mem_loaded_res :
-			 (forward_a == 2'b10) ? final_wb_res   :
-			 (jalr || jal || auipc) ? pc : rs1_src ;
+assign op1 = (jalr || jal || auipc) ? pc : real_rs1_src ;
 
-assign op2 = (forward_b == 2'b01) ? mem_loaded_res     :
-			 (forward_b == 2'b10) ? final_wb_res   	   :
-			 (alu_src2_sel == `ALU_SRC2_RS2) ? rs2_src :
+assign op2 = (alu_src2_sel == `ALU_SRC2_RS2) ? real_rs2_src :
 			 (alu_src2_sel == `ALU_SRC2_IMM) ? imm     :
 			 (alu_src2_sel == `ALU_SRC2_CSR) ? csr_src :
 			 (alu_src2_sel == `ALU_SRC2_PC4) ? 32'd4 : 32'b0;

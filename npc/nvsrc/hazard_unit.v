@@ -6,6 +6,8 @@ module hazard_unit (
     input  [`REG_ADDR_WIDTH-1:0] rs1_addr_ex,
     input  [`REG_ADDR_WIDTH-1:0] rs2_addr_ex,
     input  [`REG_ADDR_WIDTH-1:0] rd_addr_ex,
+	input 						 rs1_ren_ex,
+	input 						 rs2_ren_ex,
     input                        mem_re_ex,       // EX阶段指令是否是 Load 指令 (idu_mem_re)
     input                        branch_taken_ex, // EX阶段是否发生跳转 (branch_taken)
 
@@ -43,24 +45,24 @@ module hazard_unit (
         forward_b = 2'b00;
 
         // --- rs1 前递判断 ---
-        if (reg_we_mem && (rd_addr_mem != 5'b0) 
-			&& (rd_addr_mem == rs1_addr_ex)) begin
-            	forward_a = 2'b01; // 第一优先级：紧挨着它的前一条指令 (从 MEM 阶段前递)
-        end 
-		else if (reg_we_wb && (rd_addr_wb != 5'b0) 
-			&& (rd_addr_wb == rs1_addr_ex)) begin
-            	forward_a = 2'b10; // 第二优先级：前两条指令 (从 WB 阶段前递)
-        end
+		if(rs1_ren_ex && rs1_addr_ex != 5'b0) begin
+			if (reg_we_mem && (rd_addr_mem == rs1_addr_ex)) begin
+					forward_a = 2'b01; // 第一优先级：紧挨着它的前一条指令 (从 MEM 阶段前递)
+			end 
+			else if (reg_we_wb && (rd_addr_wb == rs1_addr_ex)) begin
+					forward_a = 2'b10; // 第二优先级：前两条指令 (从 WB 阶段前递)
+			end
+		end
 
         // --- rs2 前递判断 ---
-        if (reg_we_mem && (rd_addr_mem != 5'b0) 
-			&& (rd_addr_mem == rs2_addr_ex)) begin
-            	forward_b = 2'b01; 
-        end 
-		else if (reg_we_wb && (rd_addr_wb != 5'b0) 
-			&& (rd_addr_wb == rs2_addr_ex)) begin
-            	forward_b = 2'b10;
-        end
+		if(rs2_ren_ex && rs2_addr_ex != 5'b0) begin 
+			if (reg_we_mem && (rd_addr_mem == rs2_addr_ex)) begin
+					forward_b = 2'b01; 
+			end 
+			else if (reg_we_wb && (rd_addr_wb == rs2_addr_ex)) begin
+					forward_b = 2'b10;
+			end
+		end
     end
 
     // --------------------------------------------------------------------
@@ -82,9 +84,9 @@ module hazard_unit (
 
     // IF/ID 寄存器停顿与冲刷：
     // IFU 在等数据，或遇到了 Load-use，IF/ID 都要停顿保持原值
-    assign stall_if_id   = lsu_stall_req | ifu_stall_req | load_use_hazard;
+    assign stall_if_id   = lsu_stall_req | load_use_hazard;
     // 一旦分支生效，清空还没执行的指令
-    assign flush_if_id   = branch_taken_ex;
+    assign flush_if_id   = branch_taken_ex | (ifu_stall_req & !lsu_stall_req);
 
     // ID/EX 寄存器停顿与冲刷：
     // 如果 IFU 没数据(导致IF/ID里的指令失效)，或者遇到 Load-Use，需要向下塞入气泡(Flush)

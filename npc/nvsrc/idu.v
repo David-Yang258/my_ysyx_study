@@ -32,6 +32,8 @@ module idu (
 	output reg 	[`REG_ADDR_WIDTH-1:0] 	rd,
 	output reg 	[`REG_ADDR_WIDTH-1:0] 	rs1,
 	output reg 	[`REG_ADDR_WIDTH-1:0] 	rs2,	
+	output reg 							rs1_en,
+	output reg 							rs2_en,
 
 	output reg  [`CSR_ADDR_WIDTH-1:0]   csr_raddr,
 	output reg  [`CSR_ADDR_WIDTH-1:0]   csr_waddr1,
@@ -119,8 +121,10 @@ always@(*) begin
 	auipc  = 1'b0;
 	csr_flag = 1'b0;
 	ecall  = 1'b0;
-	Ebreak 		= 1'b0;
+	Ebreak = 1'b0;
 	mret   = 1'b0;
+	rs1_en = 1'b0;
+	rs2_en = 1'b0;
 	
 	casez(opcode)
 		OPCODE_U_TYPE: begin
@@ -143,6 +147,7 @@ always@(*) begin
 			reg_we = 1'b1;
 			alu_op = `ALU_ADD;
 			jalr   = 1'b1;
+			rs1_en = 1'b1;
 		end
 		OPCODE_JAL   : begin 
 			imm = immJ; 										rd = rd_dec;
@@ -154,6 +159,8 @@ always@(*) begin
 		end
 		OPCODE_B_TYPE:begin 
 			imm = immB;	rs1 = rs1_dec; rs2 = rs2_dec;
+			rs1_en = 1'b1;
+			rs2_en = 1'b1;
 			alu_src2_sel = `ALU_SRC2_RS2;
 			wb_sel = `ALU_TO_PC;
 			case(funct3)
@@ -187,6 +194,7 @@ always@(*) begin
 		end
 		OPCODE_L_TYPE:begin
 			imm = immI; rs1 = rs1_dec; 							rd = rd_dec;
+			rs1_en = 1'b1;
 			alu_src2_sel = `ALU_SRC2_IMM;
 			wb_sel = `MEM_TO_REG;
 			alu_op = `ALU_ADD;
@@ -203,6 +211,8 @@ always@(*) begin
 		end
 		OPCODE_S_TYPE:begin
 			imm = immS; rs1 = rs1_dec; rs2 = rs2_dec;
+			rs1_en = 1'b1;
+			rs2_en = 1'b1;
 			alu_src2_sel = `ALU_SRC2_IMM;
 			wb_sel = `ALU_TO_MEM;
 			alu_op = `ALU_ADD;
@@ -216,6 +226,7 @@ always@(*) begin
 		end
 		OPCODE_IR_TYPE:begin
 			imm = immI; rs1 = rs1_dec; 							rd = rd_dec;
+			rs1_en = 1'b1;
 			alu_src2_sel = `ALU_SRC2_IMM;
 			wb_sel = `ALU_TO_REG;
 			reg_we = 1'b1;
@@ -236,6 +247,8 @@ always@(*) begin
 		end
 		OPCODE_R_TYPE: begin
 						rs1 = rs1_dec; rs2 = rs2_dec; 			rd = rd_dec;
+			rs1_en = 1'b1;
+			rs2_en = 1'b1;
 			alu_src2_sel = `ALU_SRC2_RS2;
 			wb_sel = `ALU_TO_REG;
 			reg_we = 1'b1;

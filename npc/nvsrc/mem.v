@@ -32,7 +32,7 @@ module mem(
 import "DPI-C" function int pmem_read(input int raddr);
 import "DPI-C" function void pmem_write(input int waddr, input int wdata, input byte mask, bit clk);
 
-`define MAX_DELAY 5'd5
+`define MAX_DELAY 5'd1
 
 localparam MEM_IDLE = 3'b000;
 

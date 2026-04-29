@@ -5,6 +5,10 @@ module pip_lsu_wbu(
 	input 							  rst_n,
 	input 							  stall,
 
+	input 		[`BUS_DATA_WIDTH-1:0] lsu_pc,
+	input 		[`BUS_DATA_WIDTH-1:0] lsu_inst,
+	input 							  lsu_inst_valid,
+
 	input 		[2:0] 				  lsu_wb_sel,
 
 	input 		[`REG_ADDR_WIDTH-1:0] lsu_rd_waddr,
@@ -22,6 +26,10 @@ module pip_lsu_wbu(
 	input 							  lsu_csr_we2,
 
 	output reg 	[2:0] 				  wbu_wb_sel,
+
+	output reg 	[`BUS_DATA_WIDTH-1:0] wbu_pc,
+	output reg	[`BUS_DATA_WIDTH-1:0] wbu_inst,
+	output reg						  wbu_inst_valid,
 
 	output reg 	[`REG_ADDR_WIDTH-1:0] wbu_rd_waddr,
 	output reg 	[`CSR_ADDR_WIDTH-1:0] wbu_csr_waddr1,
@@ -41,6 +49,9 @@ module pip_lsu_wbu(
 
 always@(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
+		wbu_pc 			<= 32'b0;
+		wbu_inst 		<= 32'b0;
+		wbu_inst_valid 	<= 1'b0;
 		wbu_wb_sel 	 	<= `WBU_NOP;
 		wbu_rd_waddr 	<= 5'b0;
 		wbu_csr_waddr1 	<= 12'b0;
@@ -54,6 +65,9 @@ always@(posedge clk or negedge rst_n) begin
 		wbu_csr_we2 	<= 1'b0;
 	end	
 	else if(!stall) begin
+		wbu_pc 			<= lsu_pc;
+		wbu_inst 		<= lsu_inst;
+		wbu_inst_valid 	<= lsu_inst_valid;
 		wbu_wb_sel 	 	<= lsu_wb_sel 	 	;
 		wbu_rd_waddr 	<= lsu_rd_waddr 	;
 		wbu_csr_waddr1 	<= lsu_csr_waddr1 	;

@@ -14,6 +14,7 @@ module ifu(
 	input  		[`BUS_DATA_WIDTH-1:0] branch_addr,
 	input 							  stall,
 
+	output reg 						  inst_valid,
 	output reg 						  ifu_stall_rqst,
 
 	output reg  	 				  arvalid,
@@ -63,14 +64,22 @@ assign awaddr  = 32'b0;
 assign wdata   = 32'b0;
 assign wstrb   = 4'b0;
 
+reg flush_pending;
+always@(posedge clk or negedge rst_n) begin
+	if(!rst_n) flush_pending <= 1'b0;
+	else if(branch_happen) flush_pending <= 1'b1;
+	else if(ifu_state == IFU_GET_INST && rvalid) flush_pending <= 1'b0;
+end
+
 always@(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin 
-		pc        <= `PC_ENTRY; 	//ENTRY:0x80000000
 		araddr    <= `PC_ENTRY;
 		ifu_state <= IFU_IDLE; 		//IDLE
 		inst 	  <= 32'h00000013;  //NOP
 		arvalid   <= `MEM_CMD_IDLE; //IDLE cmd to mem
  		need2fetch<= 1'b1;
+		inst_valid<= 1'b0;
+		ifu_stall_rqst<=1'b0;
 	end
 	else begin
 		/* 
@@ -97,34 +106,41 @@ always@(posedge clk or negedge rst_n) begin
 			end
 			IFU_GET_INST: begin
 				if(rvalid)begin
-					inst 	  		<= rdata;
+					if(flush_pending || branch_happen) begin
+					   	inst 		<= 32'h00000013;
+						inst_valid 	<= 1'b0;
+					end
+					else begin
+					   	inst 	  	<= rdata;
+						inst_valid 	<= 1'b1;
+					end
 					rready    		<= 1'b0;
 					ifu_state 		<= IFU_JMP;
 					ifu_stall_rqst  <= 1'b0;
 					//ifu_state <= IFU_WAIT_WBU;
 				end
 			end
-			/*
-			IFU_WAIT_WBU: begin
-				if(!stall && i_ready) begin
-					ifu_state <= IFU_WRITE_BACK;
-					o_valid   <= 1'b0;
-				end
-			end
-			IFU_WRITE_BACK:begin
-				if(i_ready) ifu_state <= IFU_JMP;
-			end
-			*/
 			IFU_JMP:begin
-				if(branch_happen) begin
-					pc <= branch_addr;
+				if(!stall) begin 
+					ifu_state  <= IFU_IDLE;
+					need2fetch <= 1'b1;
+				inst_valid <= 1'b0;
 				end
-				else pc <= pc + 4;
-				need2fetch <= 1'b1;
-				if(!stall) ifu_state  <= IFU_IDLE;
 			end
 			default:; 
 		endcase;
+	end
+end
+
+always@(posedge clk or negedge rst_n) begin
+	if(!rst_n) begin
+		pc <= `PC_ENTRY;
+	end
+	else if(branch_happen) begin
+		pc <= branch_addr;
+	end
+	else if(ifu_state == IFU_JMP && !stall) begin
+		if(inst_valid)pc <= pc + 4;
 	end
 end
 endmodule
