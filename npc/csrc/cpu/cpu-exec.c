@@ -31,9 +31,12 @@ void difftest_step(vaddr_t, vaddr_t);
 CPU_state cpu = {};
 
 extern "C" void difftest_wbu_step(int wbu_pc){
-	cpu.pc = top->rootp->top__DOT__id_ex_pc;
-	printf("wbu_diff_pc: %x\n", wbu_pc);
-	difftest_step(wbu_pc, cpu.pc);	
+	//printf("wbu_diff_pc: %x\n", wbu_pc);
+	//printf("wbu_diff_npc: %x\n", cpu.pc);
+	static int cnt = 1;
+	//printf("diff_count: %d\n",cnt);
+	cnt++;
+	//difftest_step(wbu_pc, cpu.pc);	
 }
 
 void init_diff_cpu(){
@@ -101,12 +104,12 @@ contextp->timeInc(1);
 tfp->dump(contextp->time());
 contextp->timeInc(1);
 #endif
+	cpu.pc = top->pc;
 	}while(top->rootp->top__DOT__lsu_wbu_inst_valid != 1);
 	//top->eval();
 	//top->clk = !top->clk;
 	//top->eval();
 	//top->clk = !top->clk;
-	cpu.pc = top->rootp->top__DOT__id_ex_pc;
 	for(int i = 0;i < NR_GPR;i++){
 		cpu.gpr[i] = top->rootp->top__DOT__inst_gpr__DOT__rf[i];
 	}

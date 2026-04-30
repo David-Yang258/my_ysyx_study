@@ -11,7 +11,7 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc){
 	uint32_t diff_pc = top->pc;
 	if(diff_pc != ref_r->pc) {
 		printf("npc and ref have different pc!\n");
-		printf("npc pc is %x\n", top->rootp->top__DOT__lsu_wbu_pc);
+		printf("npc pc is %x\n", diff_pc);
 		printf("ref pc is %x\n", ref_r->pc);
 		return false;
 	}

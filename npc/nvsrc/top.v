@@ -7,9 +7,11 @@ module top(
 	output [2:0] o_ifu_state,
 	output Ebreak,
 	output [`BUS_DATA_WIDTH-1:0] wbu_diff_pc,
+	output [`BUS_DATA_WIDTH-1:0] wbu_diff_npc,
 	output [`BUS_DATA_WIDTH-1:0] wbu_diff_inst
 );
 
+assign pc = wbu_diff_npc;
 //wire [`BUS_DATA_WIDTH-1:0]  jmp_addr;
 
 wire [`BUS_DATA_WIDTH-1:0]  instruction;
@@ -72,6 +74,8 @@ wire ifu_stall_rqst, lsu_stall_rqst;
 
 assign inst = instruction;
 
+wire [`BUS_DATA_WIDTH-1:0]  ifu_pc;
+wire [`BUS_DATA_WIDTH-1:0]  ifu_diff_npc_d1;
 wire 						ifu_inst_valid;
 wire 						ifu_arvalid;
 wire [`MEM_ADDR_WIDTH-1:0] 	ifu_araddr;
@@ -141,10 +145,12 @@ ifu inst_ifu(
 	.bvalid 		(ifu_bvalid),
 	.bready 		(ifu_bready),
 
-	.pc 			(pc),
+	.pc 			(ifu_pc),
 	.inst 			(instruction),
 	.inst_valid 	(ifu_inst_valid),
-	.o_ifu_state 	(o_ifu_state)
+	.o_ifu_state 	(o_ifu_state),
+
+	.diff_npc_d1 	(ifu_diff_npc_d1)
 );
 
 wire [`BUS_DATA_WIDTH-1:0] if_id_pc;
@@ -161,7 +167,7 @@ pip_if_id inst_pip_if_id(
 	.rst_n 			(rst_n 		),
 	.if_inst 		(instruction),
 	.if_inst_valid 	(ifu_inst_valid),
-	.if_pc 			(pc 		),
+	.if_pc 			(ifu_pc 	),
 	.stall 			(hazard_stall_if_id),
 	.flush 			(hazard_flush_if_id),
 	.if_id_rd 		(if_id_rd 	),
@@ -345,6 +351,10 @@ wire [`BUS_DATA_WIDTH-1:0] 	wb_forward_data;
 assign mem_forward_data = ex_lsu_rd_wdata;
 `include "alu.vh"
 assign wb_forward_data   = (lsu_wbu_wb_sel == `MEM_TO_REG) ? lsu_wbu_mem_rdata : lsu_wbu_rd_wdata;
+wire [`BUS_DATA_WIDTH-1:0] forwarded_rs2_src;
+assign forwarded_rs2_src = (hazard_forward_b == 2'b01) ? mem_forward_data :
+							(hazard_forward_b == 2'b10) ? wb_forward_data :
+							id_ex_rs2_src;
 
 exu inst_exu(
 	.imm 			(id_ex_imm),
@@ -417,7 +427,7 @@ pip_ex_lsu inst_pip_ex_lsu(
 	.ex_rd_wdata 	(exu_rd_wdata),
 	.ex_csr_wdata1  (exu_csr_wdata1),
 	.ex_csr_wdata2  (exu_csr_wdata2),
-	.ex_rs2_src 	(id_ex_rs2_src),
+	.ex_rs2_src 	(forwarded_rs2_src),
 
 	.ex_rd 			(id_ex_rd_addr),
 	.ex_csr_waddr1  (id_ex_csr_waddr1),
@@ -599,6 +609,7 @@ wbu inst_wbu(
 	.wb_sel 		(lsu_wbu_wb_sel),
 
 	.wbu_pc 		(lsu_wbu_pc),
+	.if_npc 		(ifu_diff_npc_d1),
 	.wbu_inst 		(lsu_wbu_inst),
 	.wbu_inst_valid (lsu_wbu_inst_valid),
 
@@ -626,6 +637,7 @@ wbu inst_wbu(
 	.final_csr_we2 	(final_csr_we2),
 	.final_reg_we 	(final_reg_we),
 	.wbu_diff_pc 	(wbu_diff_pc),
+	.wbu_diff_npc 	(wbu_diff_npc),
 	.wbu_diff_inst 	(wbu_diff_inst)
 );
 

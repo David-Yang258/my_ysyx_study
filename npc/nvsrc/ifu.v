@@ -42,7 +42,8 @@ module ifu(
 
 	output reg 	[`BUS_DATA_WIDTH-1:0] pc,
 	output reg 	[`BUS_DATA_WIDTH-1:0] inst,
-	output      [2:0] 				  o_ifu_state
+	output      [2:0] 				  o_ifu_state,
+	output reg  [`BUS_DATA_WIDTH-1:0] diff_npc_d1
 );
 reg [2:0]  				  ifu_state; 		 //IFU state
 
@@ -142,5 +143,6 @@ always@(posedge clk or negedge rst_n) begin
 	else if(ifu_state == IFU_JMP && !stall) begin
 		if(inst_valid)pc <= pc + 4;
 	end
+	diff_npc_d1 <= pc;
 end
 endmodule
