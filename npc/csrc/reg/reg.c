@@ -14,7 +14,7 @@ void isa_reg_display() {
   int i, cnt;
   for(i = 0,cnt=1;i<sizeof(regs)/sizeof(regs[0]);i++,cnt++) {
 	  if(i == 32) printf("%s : %x   \n",regs[i], top->pc);
-	  else printf("%s : %x   ",regs[i], top->rootp->top__DOT__inst_gpr__DOT__rf[i]);
+	  else printf("%s : %x   ",regs[i], top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[i]);
 	  if(cnt % 4 == 0) printf("\n");
   }
 }
@@ -31,7 +31,7 @@ word_t isa_reg_str2val(const char *s, bool *success) {
       }
       cnt++;
     }
-    if(*success == 1 && cnt != 32) return top->rootp->top__DOT__inst_gpr__DOT__rf[cnt];
+    if(*success == 1 && cnt != 32) return top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[cnt];
     else if(*success) return top->pc;
     else return 0;
 }

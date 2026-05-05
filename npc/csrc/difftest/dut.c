@@ -16,10 +16,10 @@ bool isa_difftest_checkregs(CPU_state *ref_r, vaddr_t pc){
 		return false;
 	}
 	for(int i = 0;i<cpu_reg_num;i++){
-		if(ref_r->gpr[i] != top->rootp->top__DOT__inst_gpr__DOT__rf[i]){
+		if(ref_r->gpr[i] != top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[i]){
 			 Log("%s Reg content is different after executing instruction at pc ="       FMT_WORD
                         ", right = " FMT_WORD ", wrong = " FMT_WORD ", diff = "
-                        FMT_WORD, ANSI_FMT("DIFFTEST ERROR!", ANSI_FG_RED),pc, ref_r->gpr[i], top->rootp->top__DOT__inst_gpr__DOT__rf[i], ref_r->gpr[i] ^ top->rootp->top__DOT__inst_gpr__DOT__rf[i]);
+                        FMT_WORD, ANSI_FMT("DIFFTEST ERROR!", ANSI_FG_RED),pc, ref_r->gpr[i], top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[i], ref_r->gpr[i] ^ top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[i]);
                 return false;
 		}
 	}

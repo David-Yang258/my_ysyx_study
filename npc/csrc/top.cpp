@@ -36,20 +36,20 @@ Vtop *top = NULL;
 extern "C" void ebreak(){
 	npc_state.state = NPC_END;
 	npc_state.halt_pc = top->pc;
-	npc_state.halt_ret = top->rootp->top__DOT__inst_gpr__DOT__rf[10];
+	npc_state.halt_ret = top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[10];
 	ebreak_stop = 1;
 }
 extern "C" void assert_abort(){
 	printf("Assert failed!\n");
 	npc_state.state = NPC_ABORT;
 	npc_state.halt_pc = top->pc;
-	npc_state.halt_ret = top->rootp->top__DOT__inst_gpr__DOT__rf[10];
+	npc_state.halt_ret = top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[10];
 }
 extern "C" void ecall(){
 	printf("ECALL!\n");
-	printf("npc mcause: %x\n", top->rootp->top__DOT__inst_csr__DOT__mcause);
-	printf("npc mtvec: %x\n", top->rootp->top__DOT__inst_csr__DOT__mtvec);
-	printf("npc mepc: %x\n", top->rootp->top__DOT__inst_csr__DOT__mepc);
+	printf("npc mcause: %x\n", top->rootp->top__DOT__core_cpu__DOT__inst_csr__DOT__mcause);
+	printf("npc mtvec: %x\n", top->rootp->top__DOT__core_cpu__DOT__inst_csr__DOT__mtvec);
+	printf("npc mepc: %x\n", top->rootp->top__DOT__core_cpu__DOT__inst_csr__DOT__mepc);
 }
 
 extern "C" void uart_printf(int wdata, int clk){
@@ -131,7 +131,7 @@ contextp->timeInc(1);
 #endif
 	printf("pc = %x\n", top->pc);
 
-	while(top->o_ifu_state != 5){
+	while(top->rootp->top__DOT__core_cpu__DOT__inst_ifu__DOT__ifu_state != 5){
 		top->clk = 1;
 		top->eval();
 #ifdef wave

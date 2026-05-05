@@ -31,7 +31,7 @@ void difftest_step(vaddr_t, vaddr_t);
 CPU_state cpu = {};
 
 extern "C" void difftest_wbu_step(int wbu_pc){
-	//printf("wbu_diff_pc: %x\n", wbu_pc);
+	//printf("top->rootp->top__DOT__core_cpu__DOT__wbu_diff_pc: %x\n", wbu_pc);
 	//printf("wbu_diff_npc: %x\n", cpu.pc);
 	static int cnt = 1;
 	//printf("diff_count: %d\n",cnt);
@@ -63,7 +63,7 @@ printf("IFU: inst = %x\n", top->inst);
 #endif
 #ifdef ITRACE_COND
 	//trace_inst2ringbuf(top->rootp->top__DOT__lsu_wbu_pc, top->rootp->top__DOT__lsu_wbu_inst);
-	if(top->wbu_diff_pc != 0 && top->wbu_diff_inst != 0)trace_inst2ringbuf(top->wbu_diff_pc, top->wbu_diff_inst);
+	if(top->rootp->top__DOT__core_cpu__DOT__wbu_diff_pc != 0 && top->rootp->top__DOT__core_cpu__DOT__wbu_diff_inst != 0)trace_inst2ringbuf(top->rootp->top__DOT__core_cpu__DOT__wbu_diff_pc, top->rootp->top__DOT__core_cpu__DOT__wbu_diff_inst);
 #endif
 #ifdef FTRACE_COND
 	if(top->inst == 0x00008067)trace_func_ret(top->pc);
@@ -105,13 +105,13 @@ tfp->dump(contextp->time());
 contextp->timeInc(1);
 #endif
 	cpu.pc = top->pc;
-	}while(top->rootp->top__DOT__lsu_wbu_inst_valid != 1);
+	}while(top->rootp->top__DOT__core_cpu__DOT__lsu_wbu_inst_valid != 1);
 	//top->eval();
 	//top->clk = !top->clk;
 	//top->eval();
 	//top->clk = !top->clk;
 	for(int i = 0;i < NR_GPR;i++){
-		cpu.gpr[i] = top->rootp->top__DOT__inst_gpr__DOT__rf[i];
+		cpu.gpr[i] = top->rootp->top__DOT__core_cpu__DOT__inst_gpr__DOT__rf[i];
 	}
 	if(ReEvalWPs()) npc_state.state = NPC_STOP;
 }
