@@ -17,34 +17,19 @@ module lsu(
 
 	/*verilator lint_off UNUSEDSIGNAL*/
 
-	output reg							arvalid,
-	output reg	[`BUS_DATA_WIDTH-1:0]   araddr,
-	input 								arready,
+	output reg	[`BUS_DATA_WIDTH-1:0]   lsu_addr,
 
 	input 		[`BUS_DATA_WIDTH-1:0] 	rdata, 
-	input 		[1:0] 					rresp,
-	input 								rvalid,
-	output reg 							rready,
 
-	output reg  [`BUS_DATA_WIDTH-1:0]   awaddr,
 	output reg 							awvalid,
-	input 								awready,
 
 	output reg	[`BUS_DATA_WIDTH-1:0] 	wdata,
-	output reg	[3:0]					wstrb,
-	output reg 							wvalid,
-	input 								wready,
-
-	input 		[1:0] 					bresp,
-	input 								bvalid,
-	output reg  						bready
+	output reg	[3:0]					wstrb
 	
 	/*verilator lint_on UNUSEDSIGNAL*/
 );
 
 localparam MEM_IDLE  	= 3'b000;
-localparam MEM_WAIT_AR  = 3'b001;
-localparam MEM_WAIT_DR  = 3'b010;
 localparam MEM_HANDLE  	= 3'b011;
 localparam MEM_DONE 	= 3'b100;
 
@@ -66,11 +51,7 @@ assign lsu_stall_rqst = (mem_re || mem_we) && (mem_state != MEM_DONE);
 always@(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		mem_state   	<= MEM_IDLE;
-		arvalid  		<= 1'b0;
-		rready 			<= 1'b0;
 		awvalid  		<= 1'b0;
-		wvalid 			<= 1'b0;
-		bready 			<= 1'b0;
 		wstrb  			<= 4'b0;
 		mem_rd_state 	<= 1'b0;
 	end
@@ -79,18 +60,14 @@ always@(posedge clk or negedge rst_n) begin
 			MEM_IDLE:begin
 				if(mem_re) begin
 					mem_rd_state 	<= MEM_RE;
-					araddr   		<= ex_lsu_raddr;
-					arvalid  		<= 1'b1;	
-					rready   		<= 1'b1;
-					mem_state  	 	<= MEM_WAIT_AR;
+					lsu_addr   		<= ex_lsu_raddr;
+					mem_state  	 	<= MEM_HANDLE;
 				end
 				else if(mem_we) begin
 					mem_rd_state 	<= MEM_WE;
-					bready    		<= 1'b0;
-					awaddr   		<= ex_lsu_waddr;
+					lsu_addr   		<= ex_lsu_waddr;
 					wdata   		<= ex_lsu_wdata;
 					awvalid 		<= 1'b1;
-					wvalid  		<= 1'b1;
 					case(ls_type)
 						`LS_TYPE_B: begin
 							case(wbyte_sel)
@@ -110,24 +87,10 @@ always@(posedge clk or negedge rst_n) begin
 						`LS_TYPE_W: wstrb <= 4'b1111; 
 						default:  wstrb <= 4'b0; 
 					endcase
-					mem_state  <= MEM_WAIT_AR;
+					mem_state  <= MEM_HANDLE;
 				end
 				else begin
 				   	mem_state  <= MEM_IDLE;
-				end
-			end
-			MEM_WAIT_AR: begin
-				if(arready || awready) begin 
-					arvalid   <= 1'b0;
-					awvalid   <= 1'b0;
-					mem_state <= MEM_WAIT_DR;
-				end
-			end
-			MEM_WAIT_DR: begin
-				if(rvalid || wready) begin 
-					rready    <= 1'b0;
-					wvalid    <= 1'b0;
-					mem_state <= MEM_HANDLE;
 				end
 			end
 			MEM_HANDLE:begin
@@ -170,14 +133,10 @@ always@(posedge clk or negedge rst_n) begin
 						mem_state <= MEM_DONE;
 					end	
 					MEM_WE:begin
-						bready    <= 1'b1;
-						if(bvalid) begin
 							mem_state <= MEM_DONE;
 						end
-					end
 					default: ;
 				endcase
-				arvalid 		<= 1'b0;
 				awvalid 		<= 1'b0;
 				wstrb  			<= 4'b0;
 				end

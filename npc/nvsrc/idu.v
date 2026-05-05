@@ -62,7 +62,6 @@ module idu (
 	output reg   						csr_flag,
 
 	output reg 							ecall,
-	output reg 							Ebreak,
 	output reg 							mret,
 
 	output reg 							predict_taken
@@ -121,7 +120,6 @@ always@(*) begin
 	auipc  = 1'b0;
 	csr_flag = 1'b0;
 	ecall  = 1'b0;
-	Ebreak = 1'b0;
 	mret   = 1'b0;
 	rs1_en = 1'b0;
 	rs2_en = 1'b0;
@@ -287,7 +285,6 @@ always@(*) begin
 						ecall 	   = 1'b1;
 					end
 					else if(Efunct12 == 12'h001) begin 
-						Ebreak = 1'b1;//UNDER CONSTRUCTION
 						ebreak();
 					end
 					else begin
