@@ -50,7 +50,7 @@ always@(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		mem_state   	<= MEM_IDLE;
 		awvalid  		<= 1'b0;
-		wstrb  			<= 2'b0;
+		wstrb  			<= 2'b11;
 		mem_rd_state 	<= 1'b0;
 	end
 	else begin
@@ -60,7 +60,7 @@ always@(posedge clk or negedge rst_n) begin
 					mem_rd_state 	<= MEM_RE;
 					lsu_addr   		<= ex_lsu_raddr;
 					mem_state  	 	<= MEM_HANDLE;
-					wstrb 			<= 2'b11;
+					wstrb 			<= 2'b10;
 				end
 				else if(mem_we) begin
 					mem_rd_state 	<= MEM_WE;
@@ -128,7 +128,7 @@ always@(posedge clk or negedge rst_n) begin
 					default: ;
 				endcase
 				awvalid 		<= 1'b0;
-				wstrb  			<= 2'b0;
+				wstrb  			<= 2'b11;
 				end
 			MEM_DONE: begin
 				mem_state <= MEM_IDLE;
