@@ -11,7 +11,7 @@ module mem(
 	input 							 awvalid,
 
 	input  	   [`BUS_DATA_WIDTH-1:0] wdata,
-	input  	   [3:0] 				 wstrb
+	input  	   [1:0] 				 wstrb
 	/*verilator lint_on UNUSEDSIGNAL*/
 	//output reg						 mem_ready
 );
@@ -24,14 +24,10 @@ always@(*) begin
 	rdata   = pmem_read(araddr);
 	if(awvalid) begin
 		case(wstrb)
-			4'b0001: pmem_write(awaddr, wdata      , 8'h01, clk);
-			4'b0010: pmem_write(awaddr, wdata << 8 , 8'h02, clk);
-			4'b0100: pmem_write(awaddr, wdata << 16, 8'h04, clk);
-			4'b1000: pmem_write(awaddr, wdata << 24, 8'h08, clk);
-			4'b0011: pmem_write(awaddr, wdata 	   , 8'h03, clk);
-			4'b0110: pmem_write(awaddr, wdata << 8 , 8'h06, clk);
-			4'b1100: pmem_write(awaddr, wdata << 16, 8'h0c, clk);
-			4'b1111: pmem_write(awaddr, wdata 	   , 8'h0f, clk);
+			2'b00: pmem_write(awaddr, wdata      , 8'b00, clk);
+			2'b01: pmem_write(awaddr, wdata  	 , 8'b01, clk);
+			2'b10: pmem_write(awaddr, wdata  	 , 8'b10, clk);
+			2'b11: ;
 			default: ;
 		endcase
 	end

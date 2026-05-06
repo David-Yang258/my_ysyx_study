@@ -24,7 +24,7 @@ module lsu(
 	output reg 							awvalid,
 
 	output reg	[`BUS_DATA_WIDTH-1:0] 	wdata,
-	output reg	[3:0]					wstrb
+	output reg	[1:0]					wstrb
 	
 	/*verilator lint_on UNUSEDSIGNAL*/
 );
@@ -40,10 +40,8 @@ localparam MEM_WE   = 1'b1;
 reg mem_rd_state;
 //reg wait4mem;
 reg  [2:0] mem_state;
-wire [1:0] wbyte_sel;
 wire [1:0] rbyte_sel;
 
-assign wbyte_sel = ex_lsu_waddr[1:0];
 assign rbyte_sel = ex_lsu_raddr[1:0];
 
 assign lsu_stall_rqst = (mem_re || mem_we) && (mem_state != MEM_DONE);
@@ -52,7 +50,7 @@ always@(posedge clk or negedge rst_n) begin
 	if(!rst_n) begin
 		mem_state   	<= MEM_IDLE;
 		awvalid  		<= 1'b0;
-		wstrb  			<= 4'b0;
+		wstrb  			<= 2'b0;
 		mem_rd_state 	<= 1'b0;
 	end
 	else begin
@@ -62,6 +60,7 @@ always@(posedge clk or negedge rst_n) begin
 					mem_rd_state 	<= MEM_RE;
 					lsu_addr   		<= ex_lsu_raddr;
 					mem_state  	 	<= MEM_HANDLE;
+					wstrb 			<= 2'b11;
 				end
 				else if(mem_we) begin
 					mem_rd_state 	<= MEM_WE;
@@ -70,22 +69,13 @@ always@(posedge clk or negedge rst_n) begin
 					awvalid 		<= 1'b1;
 					case(ls_type)
 						`LS_TYPE_B: begin
-							case(wbyte_sel)
-								2'b00: wstrb <= 4'b0001;
-								2'b01: wstrb <= 4'b0010;
-								2'b10: wstrb <= 4'b0100;
-								2'b11: wstrb <= 4'b1000;
-							endcase
+							wstrb <= 2'b00;
 						end	
 						`LS_TYPE_H:begin
-							case(wbyte_sel)
-								2'b00: wstrb <= 4'b0011;
-								2'b10: wstrb <= 4'b1100;
-								default:; 
-							endcase
+							wstrb <= 2'b01;
 						end	
-						`LS_TYPE_W: wstrb <= 4'b1111; 
-						default:  wstrb <= 4'b0; 
+						`LS_TYPE_W: wstrb <= 2'b10; 
+						default:  wstrb <= 2'b11; 
 					endcase
 					mem_state  <= MEM_HANDLE;
 				end
@@ -138,7 +128,7 @@ always@(posedge clk or negedge rst_n) begin
 					default: ;
 				endcase
 				awvalid 		<= 1'b0;
-				wstrb  			<= 4'b0;
+				wstrb  			<= 2'b0;
 				end
 			MEM_DONE: begin
 				mem_state <= MEM_IDLE;

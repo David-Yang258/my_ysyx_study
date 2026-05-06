@@ -11,7 +11,7 @@ wire [`BUS_DATA_WIDTH-1:0] perip_addr;
 wire [`BUS_DATA_WIDTH-1:0] perip_rdata;
 wire [`BUS_DATA_WIDTH-1:0] perip_wdata;
 wire 					   perip_wen;
-wire [3:0] 				   perip_wstrb;
+wire [1:0] 				   perip_wstrb;
 
 mycpu core_cpu(
 	.clk 	 	(clk),

@@ -104,14 +104,50 @@ extern "C" void pmem_write(int waddr, int wdata, char wmask, int clk){
 	//printf("waddr: %x\n", waddr);
 	uint32_t aligned_addr = waddr & ~0x3u;
 	uint32_t word_addr = aligned_addr / 4;
+	uint32_t wbsel = waddr & 0x3u;
 	
 	uint32_t current = memory[word_addr];
-	int char2put;
+	//int char2put;
 	uint8_t *byte_write = (uint8_t*)&current;
+	char newmask = 0x0;
+	switch(wmask){
+		case 0x0://store byte
+			if(wbsel == 0x0) {
+				newmask = 0x01;
+			}
+			else if(wbsel == 0x1) {
+				newmask = 0x02;
+				wdata = wdata << 8;
+			}
+			else if(wbsel == 0x2) {
+				newmask = 0x04;
+				wdata = wdata << 16;
+			}
+			else if(wbsel == 0x3) {
+				newmask = 0x08;
+				wdata = wdata << 24;
+			}
+			else newmask = 0x00;
+			break;
+		case 0x1://store half word
+			if(wbsel == 0x0) {
+				newmask = 0x3;
+			}
+			else if(wbsel == 0x2) {
+				newmask = 0xc;
+				wdata = wdata << 16;
+			}
+		 	else newmask = 0x00;	
+			break;
+		case 0x2://store word
+			newmask = 0xf;
+			break;
+		default:break;
+	}
 	for(int i=0;i<4;i++){
-		if(wmask & (1<<i)){
+		if(newmask & (1<<i)){
 			byte_write[i] = (wdata >> (i * 8)) & 0xFF;
-			char2put = byte_write[i];
+			//char2put = byte_write[i];
 		}
 	}
 	//if(waddr == 0x87000000) {putchar(char2put);return;}

@@ -10,7 +10,7 @@ module mycpu(
 	input  [`BUS_DATA_WIDTH-1:0] perip_rdata,
 	output [`BUS_DATA_WIDTH-1:0] perip_wdata,
 	output 						 perip_wen,
-	output [3:0] 				 perip_wstrb
+	output [1:0] 				 perip_wstrb
 	
 );
 /*verilator lint_off UNUSEDSIGNAL*/
@@ -446,7 +446,7 @@ wire [`BUS_DATA_WIDTH-1:0] 	mem_rdata;
 wire 						lsu_mem_awvalid;
 
 wire [`BUS_DATA_WIDTH-1:0] 	lsu_mem_wdata;
-wire [3:0] 					lsu_mem_wstrb;
+wire [1:0] 					lsu_mem_wstrb;
 
 assign perip_wen = lsu_mem_awvalid;
 assign perip_addr=lsu_mem_addr;
