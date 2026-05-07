@@ -51,7 +51,7 @@ static void exec_once(){
 	printf("IFU: inst = %x\n", DTOP_INST);
 #endif
 #ifdef ITRACE_COND
-	trace_inst2ringbuf(DTOP_PC, DTOP_INST);
+	if(DTOP_PC != 0 && DTOP_INST != 0)trace_inst2ringbuf(DTOP_PC, DTOP_INST);
 #endif
 #ifdef FTRACE_COND
 	if(DTOP_INST == 0x00008067)trace_func_ret(DTOP_PC);
