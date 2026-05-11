@@ -45,10 +45,11 @@ module lsu(
 	/*verilator lint_on UNUSEDSIGNAL*/
 );
 
-localparam MEM_IDLE  	= 2'b00;
-localparam MEM_WAIT_AR  = 2'b01;
-localparam MEM_WAIT_DR  = 2'b10;
-localparam MEM_HANDLE  	= 2'b11;
+localparam MEM_IDLE  	= 3'b000;
+localparam MEM_WAIT_AR  = 3'b001;
+localparam MEM_WAIT_DR  = 3'b010;
+localparam MEM_HANDLE  	= 3'b011;
+localparam MEM_WAIT 	= 3'b100;
 
 localparam MEM_RE   = 1'b0;
 localparam MEM_WE   = 1'b1;
@@ -56,7 +57,7 @@ localparam MEM_WE   = 1'b1;
 
 reg mem_rd_state;
 //reg wait4mem;
-reg  [1:0] mem_state;
+reg  [2:0] mem_state;
 wire [1:0] wbyte_sel;
 wire [1:0] rbyte_sel;
 
@@ -154,7 +155,7 @@ always@(posedge clk) begin
 				if((arready) && !stall) begin 
 					arvalid   <= 1'b0;
 					rready    <= 1'b0;
-					mem_state <= MEM_HANDLE;
+					mem_state <= MEM_WAIT_DR;
 				end
 				if(awready && !stall) begin
 					awvalid    <= 1'b0;
@@ -175,7 +176,7 @@ always@(posedge clk) begin
 						case(ls_type)
 							`LS_TYPE_B :  begin 
 								case(rbyte_sel)
-									2'b00: mem_rdata <= {{24{rdata[7]}},{rdata[7:0]}};
+									2'b00: mem_rdata <= {{24{rdata[7]}} ,{rdata[7:0]}};
 									2'b01: mem_rdata <= {{24{rdata[15]}},{rdata[15:8]}};
 									2'b10: mem_rdata <= {{24{rdata[23]}},{rdata[23:16]}};
 									2'b11: mem_rdata <= {{24{rdata[31]}},{rdata[31:24]}};
@@ -207,26 +208,34 @@ always@(posedge clk) begin
 							default   :  mem_rdata <= 32'h7FDFDFDF;
 						endcase
 						lsu_rcpl <= 1'b1;
-						if(!stall && i_ready) begin
-							mem_state <= MEM_IDLE;
-							//lsu_ready <= 1'b1;
-						end
+						mem_state<= MEM_WAIT;
 					end	
 					MEM_WE:begin
 						bready    <= 1'b1;
 						lsu_wcpl  <= 1'b1;
-						//lsu_ready <= 1'b1;
+						mem_state <= MEM_WAIT;
+					end
+					default: ;
+				endcase
+				arvalid<= 1'b0;
+				awvalid<= 1'b0;
+				wstrb<= 4'b0;
+			end
+			MEM_WAIT: begin
+				case(mem_rd_state)
+					MEM_RE: begin	
+						if(!stall && i_ready) begin
+							mem_state <= MEM_IDLE;
+							//lsu_ready <= 1'b1;
+						end
+					end
+					MEM_WE: begin
 						if(bvalid) begin
 							mem_state <= MEM_IDLE;
 						end
 					end
-					default: ;
-					endcase
-					//wait4mem  <= 1'b0;
-					arvalid<= 1'b0;
-					awvalid<= 1'b0;
-					wstrb<= 4'b0;
-				end
+				endcase
+			end
 			default: bus_error <= 1'b1;
 		endcase
 

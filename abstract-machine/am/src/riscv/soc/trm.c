@@ -8,13 +8,13 @@
 #define UART_RBR    0x00  // Receiver Buffer Register (read, DLAB=0)
 #define UART_THR    0x00  // Transmitter Holding Register (write, DLAB=0)
 #define UART_DLL    0x00  // Divisor Latch Low (DLAB=1)
-#define UART_DLM    (0x01 << 2)  // Divisor Latch High (DLAB=1)
-#define UART_IER    (0x01 << 2)  // Interrupt Enable Register (DLAB=0)
-#define UART_FCR    (0x02 << 2)  // FIFO Control Register
-#define UART_LCR    (0x03 << 2)  // Line Control Register
-#define UART_MCR    (0x04 << 2)  // Modem Control Register
-#define UART_LSR    (0x05 << 2) // Line Status Register
-#define UART_MSR    (0x06 << 2)  // Modem Status Register
+#define UART_DLM    (0x01)  // Divisor Latch High (DLAB=1)
+#define UART_IER    (0x01)  // Interrupt Enable Register (DLAB=0)
+#define UART_FCR    (0x02)  // FIFO Control Register
+#define UART_LCR    (0x03)  // Line Control Register
+#define UART_MCR    (0x04)  // Modem Control Register
+#define UART_LSR    (0x05) // Line Status Register
+#define UART_MSR    (0x06)  // Modem Status Register
 
 // Line Control Register bits
 #define LCR_DLAB    0x80  // Divisor Latch Access Bit
@@ -44,33 +44,10 @@ extern char _pmem_start;
 Area heap = RANGE(&_heap_start, PMEM_END);
 static const char mainargs[MAINARGS_MAX_LEN] = TOSTRING(MAINARGS_PLACEHOLDER); // defined in CFLAGS
 
-static void force_putch(char ch){
-	outb(UART_BASE + UART_THR, ch);
-	for(volatile int i = 0; i < 500; i++);
-}
-
-static void debug_print_lsr(){
-	uint8_t status = inb(UART_BASE + UART_LSR);
-	const char hex_chars[] = "0123456789ABCDEF";
-	force_putch('L');
-	force_putch('S');
-	force_putch('R');
-	force_putch(':');
-	force_putch('0');
-	force_putch('x');
-
-	force_putch(hex_chars[(status >> 4) & 0x0f]);
-	force_putch(hex_chars[status & 0x0f]);
-
-	force_putch('\r');
-	force_putch('\n');
-}
-
 void putch(char ch) {
-	debug_print_lsr();
-	while((inb(UART_BASE + UART_LSR) & LSR_TX_EMPTY) == 0){
-		asm volatile("nop");
-	}
+	while ((inb(UART_BASE + UART_LSR) & LSR_THRE) == 0) {
+        asm volatile("nop"); 
+    }
 	outb(UART_BASE + UART_THR, ch);
 }
 

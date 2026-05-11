@@ -150,6 +150,7 @@ wire [`BUS_DATA_WIDTH-1:0] final_csr_wdata2;
 wire [`BUS_DATA_WIDTH-1:0] final_mem_wdata;
 wire wbu_ready;
 
+wire oled;
 
 assign stall = 1'b0;
 
@@ -181,8 +182,6 @@ assign ifu_awready = 1'b0;
 assign ifu_wready  = 1'b0;
 assign ifu_bresp   = 2'b00;
 assign ifu_bvalid  = 1'b0;
-
-wire oled;
 
 ifu ysyx_26030090_ifu(
 	.clk 			(clock),
@@ -430,6 +429,39 @@ wire [1:0] arb_bresp;
 wire arb_bvalid;
 wire arb_bready;
 
+wire [3:0]   	arb_out_awid;
+wire [31:0]  	arb_out_awaddr;
+wire [7:0]   	arb_out_awlen;
+wire [2:0]   	arb_out_awsize;
+wire [1:0]   	arb_out_awburst;
+wire         	arb_out_awvalid;
+wire          	arb_out_awready;
+
+wire [31:0]  	arb_out_wdata;
+wire [3:0]   	arb_out_wstrb;
+wire         	arb_out_wlast;
+wire         	arb_out_wvalid;
+wire          	arb_out_wready;
+
+wire  [3:0]   	arb_out_bid;
+wire  [1:0]   	arb_out_bresp;
+wire         	arb_out_bvalid;
+wire         	arb_out_bready;
+
+wire [3:0]   	arb_out_arid;
+wire [31:0]  	arb_out_araddr;
+wire [7:0]   	arb_out_arlen;
+wire [2:0]   	arb_out_arsize;
+wire [1:0]   	arb_out_arburst;
+wire         	arb_out_arvalid;
+wire          	arb_out_arready;
+
+wire  [3:0]   	arb_out_rid;
+wire  [31:0]  	arb_out_rdata;
+wire  [1:0]   	arb_out_rresp;
+wire          	arb_out_rlast;
+wire          	arb_out_rvalid;
+wire         	arb_out_rready;
 arbiter_mem ysyx_26030090_arbiter(
 	.aclk 			(clock),
 	.reset 			(reset),
@@ -515,6 +547,81 @@ assign io_slave_bvalid = 0;
 assign io_slave_wready = 0;
 assign io_slave_awready = 0;
 
+axi_uart_bridge ysyx_26030090_axi_uart_bridge(
+	.clk				(clock),
+    .reset				(reset),
+
+    // Slave Side (接你的 Lite2Full Bridge)
+    .s_awid				(arb_out_awid),
+    .s_awaddr			(arb_out_awaddr),
+    .s_awlen			(arb_out_awlen),
+    .s_awsize			(arb_out_awsize),
+    .s_awburst			(arb_out_awburst),
+    .s_awvalid			(arb_out_awvalid),
+    .s_awready			(arb_out_awready),
+
+    .s_wdata			(arb_out_wdata),
+    .s_wstrb			(arb_out_wstrb),
+    .s_wlast			(arb_out_wlast),
+    .s_wvalid			(arb_out_wvalid),
+    .s_wready			(arb_out_wready),
+
+    .s_bid				(arb_out_bid),
+    .s_bresp			(arb_out_bresp),
+    .s_bvalid			(arb_out_bvalid),
+    .s_bready			(arb_out_bready),
+
+    .s_arid				(arb_out_arid),
+    .s_araddr			(arb_out_araddr),
+    .s_arlen			(arb_out_arlen),
+    .s_arsize			(arb_out_arsize),
+    .s_arburst			(arb_out_arburst),
+    .s_arvalid			(arb_out_arvalid),
+    .s_arready			(arb_out_arready),
+
+    .s_rid				(arb_out_rid),
+    .s_rdata			(arb_out_rdata),
+    .s_rresp			(arb_out_rresp),
+    .s_rlast			(arb_out_rlast),
+    .s_rvalid			(arb_out_rvalid),
+    .s_rready			(arb_out_rready),
+
+    // Master Side (接 SoC io_master 接口)
+    .m_awid				(io_master_awid),
+    .m_awaddr			(io_master_awaddr),
+    .m_awlen			(io_master_awlen),
+    .m_awsize			(io_master_awsize),
+    .m_awburst			(io_master_awburst),
+    .m_awvalid			(io_master_awvalid),
+    .m_awready			(io_master_awready),
+
+    .m_wdata			(io_master_wdata),
+    .m_wstrb			(io_master_wstrb),
+    .m_wlast			(io_master_wlast),
+    .m_wvalid			(io_master_wvalid),
+    .m_wready			(io_master_wready),
+
+    .m_bid				(io_master_bid),
+    .m_bresp			(io_master_bresp),
+    .m_bvalid			(io_master_bvalid),
+    .m_bready			(io_master_bready),
+
+    .m_arid				(io_master_arid),
+    .m_araddr			(io_master_araddr),
+    .m_arlen			(io_master_arlen),
+    .m_arsize			(io_master_arsize),
+    .m_arburst			(io_master_arburst),
+    .m_arvalid			(io_master_arvalid),
+    .m_arready			(io_master_arready),
+
+    .m_rid				(io_master_rid),
+    .m_rdata			(io_master_rdata),
+    .m_rresp			(io_master_rresp),
+    .m_rlast			(io_master_rlast),
+    .m_rvalid			(io_master_rvalid),
+    .m_rready         	(io_master_rready)
+);
+
 lite2full_bridge ysyx_26030090_bridge(
 	.l_awvalid 		(arb_awvalid),
 	.l_awready		(arb_awready),
@@ -538,39 +645,39 @@ lite2full_bridge ysyx_26030090_bridge(
 	.l_rdata		(arb_rdata),
 	.l_rresp		(arb_rresp),
 	   
-	.f_awvalid		(io_master_awvalid),
-	.f_awready		(io_master_awready),
-	.f_awaddr		(io_master_awaddr),
-	.f_awlen		(io_master_awlen),
-	.f_awsize		(io_master_awsize),
-	.f_awburst		(io_master_awburst),
-	.f_awid			(io_master_awid),
+	.f_awvalid		(arb_out_awvalid),
+	.f_awready		(arb_out_awready),
+	.f_awaddr		(arb_out_awaddr),
+	.f_awlen		(arb_out_awlen),
+	.f_awsize		(arb_out_awsize),
+	.f_awburst		(arb_out_awburst),
+	.f_awid			(arb_out_awid),
 	   
-	.f_wvalid		(io_master_wvalid),
-	.f_wready		(io_master_wready),
-	.f_wdata		(io_master_wdata),
-	.f_wstrb		(io_master_wstrb),
-	.f_wlast		(io_master_wlast),
+	.f_wvalid		(arb_out_wvalid),
+	.f_wready		(arb_out_wready),
+	.f_wdata		(arb_out_wdata),
+	.f_wstrb		(arb_out_wstrb),
+	.f_wlast		(arb_out_wlast),
 	   
-	.f_bvalid		(io_master_bvalid),
-	.f_bready		(io_master_bready),
-	.f_bresp		(io_master_bresp),
-	.f_bid			(io_master_bid),
+	.f_bvalid		(arb_out_bvalid),
+	.f_bready		(arb_out_bready),
+	.f_bresp		(arb_out_bresp),
+	.f_bid			(arb_out_bid),
 	   
-	.f_arvalid		(io_master_arvalid),
-	.f_arready		(io_master_arready),
-	.f_araddr		(io_master_araddr),
-	.f_arlen		(io_master_arlen),
-	.f_arsize		(io_master_arsize),
-	.f_arburst		(io_master_arburst),
-	.f_arid			(io_master_arid),
+	.f_arvalid		(arb_out_arvalid),
+	.f_arready		(arb_out_arready),
+	.f_araddr		(arb_out_araddr),
+	.f_arlen		(arb_out_arlen),
+	.f_arsize		(arb_out_arsize),
+	.f_arburst		(arb_out_arburst),
+	.f_arid			(arb_out_arid),
 	   
-	.f_rvalid		(io_master_rvalid),
-	.f_rready		(io_master_rready),
-	.f_rdata		(io_master_rdata),
-	.f_rresp		(io_master_rresp),
-	.f_rlast		(io_master_rlast), 
-	.f_rid			(io_master_rid)
+	.f_rvalid		(arb_out_rvalid),
+	.f_rready		(arb_out_rready),
+	.f_rdata		(arb_out_rdata),
+	.f_rresp		(arb_out_rresp),
+	.f_rlast		(arb_out_rlast), 
+	.f_rid			(arb_out_rid)
 );
 
 	/*----------------------------------------------------------------------

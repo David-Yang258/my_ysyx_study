@@ -19,6 +19,9 @@
 #define MAX_LINE_LEN 256
 #define MEMORY_SIZE (-1)
 
+#define FLASH_BASE 0x30000000
+#define FLASH_SIZE 0x10000000
+
 static bool ebreak_stop = 0;
 
 static char *mem_file = NULL;
@@ -27,6 +30,7 @@ static char *elf_file = NULL;
 static char img_arr[256] = {};
 char *img_file = img_arr;
 char *diff_so_file = NULL;
+uint8_t *flash = NULL;
 
 VerilatedContext *contextp = NULL;
 
@@ -60,11 +64,14 @@ extern "C" void uart_printf(int wdata, int clock){
 	putchar(char2put);
 }
 
-extern "C" void flash_read(int32_t addr, int32_t *data) { assert(0); }
+extern "C" void flash_read(int32_t addr, int32_t *data) { 
+	if(addr > 0x10000000) assert(0);
+	assert((addr & 0x3u) == 0);
+	*data = (int)(flash[addr]);
+	//printf("flash read data: %x\n", *data);
+}
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
 	*data = pmem_read(addr);
-	//printf("addr = %x\n", addr);
-	//printf("data_addr = %p\n",data);	
 }
 
 int parse_hex_line(const char *filename, uint32_t *memory, size_t mem_size);
@@ -117,6 +124,13 @@ int main(int argc, char* argv[]){
 			return 0;
 		}
 	}
+
+	//flash init
+	flash = (uint8_t *)malloc(FLASH_SIZE);
+	if(flash == NULL) {
+		return -1;
+	}
+	memset(flash, 0x41, FLASH_SIZE);
 
 	pmem_init(mem_file,MEMORY_SIZE,&memory, &mem_words);
 
@@ -181,6 +195,7 @@ int main(int argc, char* argv[]){
 		}
 	top->final();
 	tfp->close();
+	free(flash);
 	delete top;
 	delete contextp;
 	if(npc_state.state != NPC_END || (npc_state.state == NPC_END && npc_state.halt_ret != 0)) return -1;
