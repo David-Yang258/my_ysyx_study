@@ -71,6 +71,7 @@ always@(posedge clk) begin
 	if(reset) begin 
 		pc        <= `SOC_ENTRY; 	//ENTRY:0x80000000;SoC:0x20000000;
 		araddr    <= `SOC_ENTRY;
+		rready 	  <= 1'b0;
 		ifu_state <= IFU_IDLE; 		//IDLE
 		inst 	  <= 32'h00000013;  //NOP
 		arvalid   <= `MEM_CMD_IDLE; //IDLE cmd to mem

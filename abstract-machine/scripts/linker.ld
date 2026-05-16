@@ -4,15 +4,23 @@ ENTRY(_start)
  */
 
 MEMORY{
-	MROM : ORIGIN = 0x20000000, LENGTH = 4K
-	SRAM : ORIGIN = 0x0f000000, LENGTH = 8K
+	FLASH : ORIGIN = 0x30000000, LENGTH = 4K 
+	MROM  : ORIGIN = 0x20000000, LENGTH = 4K
+	SRAM  : ORIGIN = 0x0f000000, LENGTH = 8K
 }
 
 SECTIONS {
   /* _pmem_start and _entry_offset are defined in LDFLAGS */
   /*. = _pmem_start + _entry_offset;*/
 
+  /*MROM is used for program strorage*/
+  /*
   . = ORIGIN(MROM);
+  */
+
+  /*FLASH is used for program strorage*/
+  . = ORIGIN(FLASH);
+
 
   /*Normal linker*/
   /*
@@ -22,10 +30,22 @@ SECTIONS {
   } : text
   */
 
+  /*MROM is used for program strorage*/
+/*
   .text : {
 	*(entry)
 	*(.text*)
   } > MROM AT> MROM
+
+  etext = .;
+  _etext = .;
+*/
+
+  /*FLASH is used for program strorage*/
+  .text : {
+	*(entry)
+	*(.text*)
+  } > FLASH AT> FLASH
 
   etext = .;
   _etext = .;
@@ -37,9 +57,17 @@ SECTIONS {
   }: text
   */
 
+  /*MROM is used for program strorage*/
+/*
   .rodata : {
 	*(.rodata*)
   } > MROM AT> MROM
+*/
+
+  /*FLASH is used for program strorage*/
+  .rodata : {
+	*(.rodata*)
+  } > FLASH AT> FLASH
 
   /*Normal linker*/
   /*
@@ -47,6 +75,20 @@ SECTIONS {
     *(.data*)
   } : data
   */
+  /*MROM is used for program strorage*/
+/*
+  .data : {
+	_data_lma   = LOADADDR(.data);
+	_data_start = . ;
+	*(.data*)
+	*(.sdata*)
+	*(.sdata2*)
+	. = ALIGN(4);
+	_edata = .;
+  } > SRAM AT>MROM
+*/
+
+  /*FLASH is used for program strorage*/
   .data : {
 	_data_lma   = LOADADDR(.data);
 	_data_start = . ;
@@ -56,8 +98,7 @@ SECTIONS {
 	*(.sdata2*)
 	. = ALIGN(4);
 	_edata = .;
-  } > SRAM AT>MROM
-
+  } > SRAM AT>FLASH
 
   /*Normal linker*/
   /*

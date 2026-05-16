@@ -21,6 +21,7 @@
 
 #define FLASH_BASE 0x30000000
 #define FLASH_SIZE 0x10000000
+#define wave
 
 static bool ebreak_stop = 0;
 
@@ -67,13 +68,69 @@ extern "C" void uart_printf(int wdata, int clock){
 extern "C" void flash_read(int32_t addr, int32_t *data) { 
 	if(addr > 0x10000000) assert(0);
 	assert((addr & 0x3u) == 0);
-	*data = (int)(flash[addr]);
+	int32_t biased_addr = addr + 0x30000000;
+	*data = pmem_read(biased_addr);
+	/*
+	*data = (int32_t)(
+			(flash[addr + 0] << 24 ) |
+			(flash[addr + 1] << 16 ) |
+			(flash[addr + 2] << 8  ) |
+			(flash[addr + 3] << 0  ) 
+			);
+	*/
 	//printf("flash read data: %x\n", *data);
 }
 extern "C" void mrom_read(int32_t addr, int32_t *data) {
 	*data = pmem_read(addr);
 }
 
+void load_binary(const char* filename, uint8_t* memory, uint32_t offset){
+    printf("Opening: %s\n", filename);
+    
+    FILE* fp = fopen(filename, "rb");
+    if (!fp) {
+        printf("Error: Cannot open %s\n", filename);
+        perror("fopen");  // 打印系统错误
+        assert(0);
+        return;
+    }
+    printf("File opened successfully\n");
+    
+    // 获取文件大小
+    fseek(fp, 0, SEEK_END);
+    size_t size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    printf("File size: %zu bytes (0x%zX)\n", size, size);
+    
+    if (size == 0) {
+        printf("ERROR: File is empty!\n");
+        fclose(fp);
+        return;
+    }
+    
+    // 读取前检查memory地址
+    printf("Writing to flash[0x%X]\n", offset);
+    printf("memory pointer: %p\n", memory);
+    printf("memory+offset: %p\n", memory + offset);
+    
+    // 读取
+    size_t bytes_read = fread(memory + offset, 1, size, fp);
+    printf("fread returned: %zu\n", bytes_read);
+    
+    if (bytes_read != size) {
+        printf("ERROR: fread failed! Expected %zu, got %zu\n", size, bytes_read);
+        perror("fread");
+    }
+    
+    fclose(fp);
+    
+    // 立即验证
+    printf("First 16 bytes after load:\n");
+    for (int i = 0; i < 16; i++) {
+        printf("%02X ", memory[offset + i]);
+    }
+    printf("\n");
+}
 int parse_hex_line(const char *filename, uint32_t *memory, size_t mem_size);
 uint32_t pmem_init(const char* filename, uint32_t size_bytes, uint32_t** memory, size_t*mem_words);
 
@@ -130,7 +187,16 @@ int main(int argc, char* argv[]){
 	if(flash == NULL) {
 		return -1;
 	}
-	memset(flash, 0x41, FLASH_SIZE);
+	memset(flash, 0x1F, FLASH_SIZE);
+	printf("flash[0x1000] before: 0x%02X\n", flash[0x1000]);
+
+	load_binary("/home/daviyang3182/ysyx/ysyx-workbench/am-kernels/tests/soc-tests/tests/soc-uart.bin", flash, 0x000);
+
+	printf("flash[0x1000] after: 0x%02X\n", flash[0x1000]);
+
+	// 手动写一下测试
+	flash[0x1000] = 0x42;
+	printf("manual write: 0x%02X\n", flash[0x1000]);
 
 	pmem_init(mem_file,MEMORY_SIZE,&memory, &mem_words);
 

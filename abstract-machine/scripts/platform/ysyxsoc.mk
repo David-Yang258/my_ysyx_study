@@ -10,7 +10,7 @@ AM_SRCS := riscv/soc/start.S \
 
 CFLAGS    += -fdata-sections -ffunction-sections
 LDSCRIPTS += $(AM_HOME)/scripts/linker.ld
-LDFLAGS   += --defsym=_pmem_start=0x20000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000
+LDFLAGS   += --defsym=_pmem_start=0x30000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000
 LDFLAGS   += --gc-sections -e _start
 
 MAINARGS_MAX_LEN = 64
@@ -22,7 +22,7 @@ DIFF_SO_FILE = /home/daviyang3182/ysyx/ysyx-workbench/npc/tools/nemu-diff/riscv3
 insert-arg: image
 	@python $(AM_HOME)/tools/insert-arg.py $(IMAGE).bin $(MAINARGS_MAX_LEN) $(MAINARGS_PLACEHOLDER) "$(mainargs)"
 	@hexdump -v -e '8/4 "%08x " "\n"' $(IMAGE).bin | \
-			awk '{printf "%05x: %s\n", (NR-1)*8 + 0x08000000, $$0}' > $(IMAGE).hex
+			awk '{printf "%05x: %s\n", (NR-1)*8 + 0x0C000000, $$0}' > $(IMAGE).hex
 
 image: image-dep
 	@$(OBJDUMP) -d $(IMAGE).elf > $(IMAGE).txt
