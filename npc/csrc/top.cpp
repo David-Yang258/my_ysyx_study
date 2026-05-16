@@ -203,6 +203,12 @@ int main(int argc, char* argv[]){
 	top->clock= 0;
 	top->reset= 1;
 	top->eval();
+	for(int i = 0; i < 100; i++){
+		top->clock = 1;
+		top->eval();
+		top->clock = 0;
+		top->eval();
+	}
 
 #ifdef wave
 	tfp->dump(contextp->time());
