@@ -31,7 +31,7 @@ static void restart() {
   /* Set the initial program counter. */
   //cpu.pc = RESET_VECTOR;
   cpu.pc = MROM_VECTOR;
-  printf("RESET_VECTOR = %x\n", RESET_VECTOR);
+  printf("RESET_VECTOR = %x\n", MROM_VECTOR);
 
   /* The zero register is always 0. */
   cpu.gpr[0] = 0;

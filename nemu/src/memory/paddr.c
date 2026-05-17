@@ -68,7 +68,7 @@ word_t paddr_read(paddr_t addr, int len) {
 void paddr_write(paddr_t addr, int len, word_t data) {
   if (likely(in_pmem(addr))) { 
 	  if(addr < 0x0f000000 || addr > 0x0f001fff) {
-		if(addr < 0x10000000 || addr > 0x10000fff)Assert(0,"mrom/ out of sram don't support write operation!\n");
+		if(addr < 0x10000000 || (addr > 0x10000fff && addr < 0x80000000) )Assert(0,"mrom/ out of sram don't support write operation!\n");
 	  }
 	  pmem_write(addr, len, data); 
 	  return; 

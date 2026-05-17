@@ -119,7 +119,7 @@ always@(posedge aclk) begin
 			if(!ifu_r_active & !lsu_r_active) lsu_w_active <= 1'b1;
 		end
 
-		else if(ifu_r_active & ifu_r_done) ifu_r_active <= 1'b0;
+		if(ifu_r_active & ifu_r_done) ifu_r_active <= 1'b0;
 		else if(lsu_r_active & lsu_r_done) lsu_r_active <= 1'b0;
 		else if(lsu_w_active & lsu_w_done) lsu_w_active <= 1'b0;
 	end
