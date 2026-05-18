@@ -79,12 +79,12 @@ uint32_t pmem_init(const char* filename, uint32_t size_bytes, uint32_t** memory,
 }
 
 extern "C" int8_t psram_read(int raddr){
-	printf("Psram addr : %x, read: %x\n", raddr, (int8_t)(((uint8_t*)memory)[raddr]));
+	//printf("Psram addr : %x, read: %x\n", raddr, (int8_t)(((uint8_t*)memory)[raddr]));
 	return (int8_t)(((uint8_t*)memory)[raddr]);
 }
 
 extern "C" void psram_write(int waddr, int8_t wdata){
-	printf("Psram addr : %x, write: %x\n", waddr, wdata);
+	//printf("Psram addr : %x, write: %x\n", waddr, wdata);
 	((uint8_t*)memory)[waddr] = (uint8_t)wdata;
 }
 

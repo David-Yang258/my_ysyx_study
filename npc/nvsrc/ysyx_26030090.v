@@ -547,7 +547,7 @@ assign io_slave_bvalid = 0;
 assign io_slave_wready = 0;
 assign io_slave_awready = 0;
 
-axi_uart_bridge ysyx_26030090_axi_uart_bridge(
+axi_uart_psram_bridge ysyx_26030090_axi_uart_psram_bridge(
 	.clk				(clock),
     .reset				(reset),
 
