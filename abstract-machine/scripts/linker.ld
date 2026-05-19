@@ -4,9 +4,10 @@ ENTRY(_start)
  */
 
 MEMORY{
-	FLASH : ORIGIN = 0x30000000, LENGTH = 4K 
+	FLASH : ORIGIN = 0x30000000, LENGTH = 64K 
 	MROM  : ORIGIN = 0x20000000, LENGTH = 4K
 	SRAM  : ORIGIN = 0x0f000000, LENGTH = 8K
+	PSRAM : ORIGIN = 0x80000000, LENGTH = 512K
 }
 
 SECTIONS {
@@ -98,7 +99,7 @@ SECTIONS {
 	*(.sdata2*)
 	. = ALIGN(4);
 	_edata = .;
-  } > SRAM AT>FLASH
+  } > PSRAM AT>FLASH
 
   /*Normal linker*/
   /*
@@ -118,12 +119,12 @@ SECTIONS {
 	*(.scommon)
 	. = ALIGN(4);
 	_bss_end   = .;
-  } > SRAM
+  } > PSRAM
 
-  . = _sram_start;
+  . = _psram_start;
 
   _stack_top = ALIGN(0x1000);
-  . = _stack_top + 0x1000;
+  . = _stack_top + 0x10000;
   _stack_pointer = .;
 
   end = .;

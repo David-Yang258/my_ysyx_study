@@ -10,7 +10,7 @@ AM_SRCS := riscv/soc/start.S \
 
 CFLAGS    += -fdata-sections -ffunction-sections
 LDSCRIPTS += $(AM_HOME)/scripts/linker.ld
-LDFLAGS   += --defsym=_pmem_start=0x30000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000
+LDFLAGS   += --defsym=_pmem_start=0x30000000 --defsym=_entry_offset=0x0 --defsym=_sram_start=0x0f000000 --defsym=_psram_start=0x80000000
 LDFLAGS   += --gc-sections -e _start
 
 MAINARGS_MAX_LEN = 64
