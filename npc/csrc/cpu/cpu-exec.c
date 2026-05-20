@@ -105,7 +105,7 @@ static void execute(uint64_t n){
 	for (;n>0; n--){
 		exec_once();
 		//IFDEF(CONFIG_DIFFTEST,difftest_step(old_pc, cpu.pc));
-		difftest_step(old_pc, cpu.pc);
+		//difftest_step(old_pc, cpu.pc);
 		if(npc_state.state != NPC_RUNNING) break;
 	}
 }

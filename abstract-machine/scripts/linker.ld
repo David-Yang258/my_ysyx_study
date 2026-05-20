@@ -68,6 +68,7 @@ SECTIONS {
   /*FLASH is used for program strorage*/
   .rodata : {
 	*(.rodata*)
+	. = ALIGN(4);
   } > FLASH AT> FLASH
 
   /*Normal linker*/
@@ -88,6 +89,8 @@ SECTIONS {
 	_edata = .;
   } > SRAM AT>MROM
 */
+
+  . = ORIGIN(PSRAM);
 
   /*FLASH is used for program strorage*/
   .data : {
@@ -121,16 +124,20 @@ SECTIONS {
 	_bss_end   = .;
   } > PSRAM
 
-  . = _psram_start;
-
-  _stack_top = ALIGN(0x1000);
-  . = _stack_top + 0x80000;
+  . = ALIGN(16);
+  _stack_bottom = .;
+  . = _stack_bottom + 0x20000;
+  _stack_top = .;
   _stack_pointer = .;
+
+  . = ALIGN(0x1000);
+  _heap_start = .;
+
+  . = ORIGIN(PSRAM) + LENGTH(PSRAM);
+  _heap_end = .;
 
   end = .;
   _end = .;
-
-  _heap_start = ALIGN(0x1000);
   
   /*
   . = _sram_start;
