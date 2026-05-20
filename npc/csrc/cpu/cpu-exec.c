@@ -80,7 +80,7 @@ static void exec_once(){
 
 		top->clock = !top->clock;
 		top->eval();
-#define wave
+//#define wave
 #ifdef wave
 		tfp->dump(contextp->time());
 		contextp->timeInc(1);

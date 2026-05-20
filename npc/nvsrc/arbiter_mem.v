@@ -27,7 +27,6 @@ module arbiter_mem(
 	input                            	ifu_bready,	
 	/*verilator lint_on UNUSEDSIGNAL*/
 
-
 	input                         		lsu_arvalid,
 	input      [`MEM_ADDR_WIDTH-1:0] 	lsu_araddr,
 	output                           	lsu_arready,
@@ -50,7 +49,6 @@ module arbiter_mem(
 	output                              lsu_bvalid,
 	input                            	lsu_bready,	
 		
-
 	output                          	arb_arvalid,
 	output 	   [`MEM_ADDR_WIDTH-1:0] 	arb_araddr,
 	input 	                          	arb_arready,
@@ -88,13 +86,13 @@ wire lsu_w_done;
 
 //1.Work start & done
 assign ifu_r_start = ifu_arvalid;
-assign ifu_r_done  = arb_rvalid;
-
 assign lsu_r_start = lsu_arvalid;
-assign lsu_r_done  = arb_rvalid;
-
 assign lsu_w_start = lsu_awvalid;
-assign lsu_w_done  = arb_bvalid;
+
+// 【修复核心】：必须等到 RVALID 和 RREADY 同时为 1 且属于当前活动的 master，才算真正完成！
+assign ifu_r_done  = arb_rvalid & arb_rready & ifu_r_active;
+assign lsu_r_done  = arb_rvalid & arb_rready & lsu_r_active;
+assign lsu_w_done  = arb_bvalid & arb_bready & lsu_w_active;
 
 //2.Work active
 always@(posedge aclk) begin
@@ -104,11 +102,6 @@ always@(posedge aclk) begin
 		lsu_w_active <= 1'b0;
 	end
 	else begin
-		//Priority: IFU > LSU
-		//when these 2 units request simultaneously, and no unit is
-		//at work, respond to ifu first,
-		//then lsu_r, then lsu_w(though lsu_r and lsu_w won't happen at the
-		//same time)
 		if(ifu_r_start) begin
 			if(!lsu_r_active & !lsu_w_active) ifu_r_active <= 1'b1;
 		end
@@ -147,10 +140,9 @@ assign lsu_rdata   = arb_rdata;
 assign ifu_rresp   = arb_rresp;
 assign lsu_rresp   = arb_rresp;
 
-//assign ifu_rvalid  = ifu_r_grant & arb_rvalid;
-//assign lsu_rvalid  = lsu_r_grant & arb_rvalid;
-assign ifu_rvalid  = arb_rvalid;
-assign lsu_rvalid  = arb_rvalid;
+// 【修复核心】：解除原先的危险广播，只把 valid 信号发送给当前真正获得授权的 Master
+assign ifu_rvalid  = ifu_r_grant & arb_rvalid;
+assign lsu_rvalid  = lsu_r_grant & arb_rvalid;
 
 assign arb_rready  = ifu_r_grant ? ifu_rready  : (lsu_r_grant ? lsu_rready  : 1'b0);
 
@@ -170,9 +162,9 @@ assign ifu_wready  = 1'b0;
 assign lsu_bresp   = lsu_w_grant ? arb_bresp  : 2'b11;
 assign ifu_bresp   = 2'b00;
 
-assign lsu_bvalid  = arb_bvalid;
+assign lsu_bvalid  = lsu_w_grant & arb_bvalid;
 assign ifu_bvalid  = 1'b0;
 
-assign arb_bready  = lsu_bready;
+assign arb_bready  = lsu_w_grant ? lsu_bready : 1'b1;
 
 endmodule

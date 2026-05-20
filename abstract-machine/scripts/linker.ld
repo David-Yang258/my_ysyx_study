@@ -124,7 +124,7 @@ SECTIONS {
   . = _psram_start;
 
   _stack_top = ALIGN(0x1000);
-  . = _stack_top + 0x10000;
+  . = _stack_top + 0x80000;
   _stack_pointer = .;
 
   end = .;

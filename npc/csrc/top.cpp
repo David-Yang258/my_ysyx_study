@@ -21,7 +21,7 @@
 
 #define FLASH_BASE 0x30000000
 #define FLASH_SIZE 0x10000000
-#define wave
+//#define wave
 
 static bool ebreak_stop = 0;
 
